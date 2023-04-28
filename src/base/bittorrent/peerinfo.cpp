@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2015-2022  Vladimir Golovnev <glassez@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,16 +31,15 @@
 #include <QBitArray>
 
 #include "base/bittorrent/ltqbitarray.h"
-#include "base/bittorrent/torrent.h"
 #include "base/net/geoipmanager.h"
 #include "base/unicodestrings.h"
 #include "peeraddress.h"
 
 using namespace BitTorrent;
 
-PeerInfo::PeerInfo(const Torrent *torrent, const lt::peer_info &nativeInfo)
+PeerInfo::PeerInfo(const lt::peer_info &nativeInfo, const QBitArray &allPieces)
     : m_nativeInfo(nativeInfo)
-    , m_relevance(calcRelevance(torrent))
+    , m_relevance(calcRelevance(allPieces))
 {
     determineFlags();
 }
@@ -181,6 +180,31 @@ QString PeerInfo::client() const
     return QString::fromStdString(m_nativeInfo.client);
 }
 
+QString PeerInfo::peerIdClient() const
+{
+    // when peer ID is not known yet it contains only zero bytes,
+    // do not create string in such case, return empty string instead
+    if (m_nativeInfo.pid.is_all_zeros())
+        return {};
+
+    QString result;
+
+    // interesting part of a typical peer ID is first 8 chars
+    for (int i = 0; i < 8; ++i)
+    {
+        const std::uint8_t c = m_nativeInfo.pid[i];
+
+        // ensure that the peer ID slice consists only of printable ASCII characters,
+        // this should filter out most of the improper IDs
+        if ((c < 32) || (c > 126))
+            return tr("Unknown");
+
+        result += QChar::fromLatin1(c);
+    }
+
+    return result;
+}
+
 qreal PeerInfo::progress() const
 {
     return m_nativeInfo.progress;
@@ -221,9 +245,8 @@ QString PeerInfo::connectionType() const
         : u"Web"_qs;
 }
 
-qreal PeerInfo::calcRelevance(const Torrent *torrent) const
+qreal PeerInfo::calcRelevance(const QBitArray &allPieces) const
 {
-    const QBitArray allPieces = torrent->pieces();
     const int localMissing = allPieces.count(false);
     if (localMissing <= 0)
         return 0;

@@ -38,7 +38,6 @@
 
 PropTabBar::PropTabBar(QWidget *parent)
     : QHBoxLayout(parent)
-    , m_currentIndex(-1)
 {
     setAlignment(Qt::AlignLeft | Qt::AlignCenter);
     setSpacing(3);
@@ -46,7 +45,7 @@ PropTabBar::PropTabBar(QWidget *parent)
     // General tab
     QPushButton *mainInfosButton = new QPushButton(
 #ifndef Q_OS_MACOS
-            UIThemeManager::instance()->getIcon(u"document-properties"_qs),
+            UIThemeManager::instance()->getIcon(u"help-about"_qs, u"document-properties"_qs),
 #endif
             tr("General"), parent);
     mainInfosButton->setShortcut(Qt::ALT + Qt::Key_G);
@@ -55,7 +54,7 @@ PropTabBar::PropTabBar(QWidget *parent)
     // Trackers tab
     QPushButton *trackersButton = new QPushButton(
 #ifndef Q_OS_MACOS
-            UIThemeManager::instance()->getIcon(u"network-server"_qs),
+            UIThemeManager::instance()->getIcon(u"trackers"_qs, u"network-server"_qs),
 #endif
             tr("Trackers"), parent);
     trackersButton->setShortcut(Qt::ALT + Qt::Key_C);
@@ -64,7 +63,7 @@ PropTabBar::PropTabBar(QWidget *parent)
     // Peers tab
     QPushButton *peersButton = new QPushButton(
 #ifndef Q_OS_MACOS
-            UIThemeManager::instance()->getIcon(u"edit-find-user"_qs),
+            UIThemeManager::instance()->getIcon(u"peers"_qs),
 #endif
             tr("Peers"), parent);
     peersButton->setShortcut(Qt::ALT + Qt::Key_R);
@@ -82,7 +81,7 @@ PropTabBar::PropTabBar(QWidget *parent)
     // Files tab
     QPushButton *filesButton = new QPushButton(
 #ifndef Q_OS_MACOS
-            UIThemeManager::instance()->getIcon(u"inode-directory"_qs),
+            UIThemeManager::instance()->getIcon(u"directory"_qs),
 #endif
             tr("Content"), parent);
     filesButton->setShortcut(Qt::ALT + Qt::Key_Z);
@@ -93,7 +92,7 @@ PropTabBar::PropTabBar(QWidget *parent)
     // Speed tab
     QPushButton *speedButton = new QPushButton(
 #ifndef Q_OS_MACOS
-            UIThemeManager::instance()->getIcon(u"office-chart-line"_qs),
+            UIThemeManager::instance()->getIcon(u"chart-line"_qs),
 #endif
             tr("Speed"), parent);
     speedButton->setShortcut(Qt::ALT + Qt::Key_D);

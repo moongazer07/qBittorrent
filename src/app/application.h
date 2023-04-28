@@ -41,6 +41,7 @@
 #include <QApplication>
 #endif
 
+#include "base/bittorrent/addtorrentparams.h"
 #include "base/interfaces/iapplication.h"
 #include "base/path.h"
 #include "base/settingvalue.h"
@@ -66,6 +67,9 @@ namespace RSS
 }
 
 #ifndef DISABLE_GUI
+class QProgressDialog;
+
+class DesktopIntegration;
 class MainWindow;
 
 using BaseApplication = QApplication;
@@ -92,10 +96,10 @@ public:
     Application(int &argc, char **argv);
     ~Application() override;
 
-    int exec(const QStringList &params);
+    int exec();
 
     bool isRunning();
-    bool sendParams(const QStringList &params);
+    bool callMainInstance();
     const QBtCommandLineParameters &commandLineArgs() const;
 
     // FileLogger properties
@@ -117,13 +121,26 @@ public:
     int memoryWorkingSetLimit() const override;
     void setMemoryWorkingSetLimit(int size) override;
 
+#ifdef Q_OS_WIN
+    MemoryPriority processMemoryPriority() const override;
+    void setProcessMemoryPriority(MemoryPriority priority) override;
+#endif
+
 #ifndef DISABLE_GUI
-    QPointer<MainWindow> mainWindow() override;
+    DesktopIntegration *desktopIntegration() override;
+    MainWindow *mainWindow() override;
+
+    WindowState startUpWindowState() const override;
+    void setStartUpWindowState(WindowState windowState) override;
+
+    bool isTorrentAddedNotificationsEnabled() const override;
+    void setTorrentAddedNotificationsEnabled(bool value) override;
 #endif
 
 private slots:
     void processMessage(const QString &message);
-    void torrentFinished(BitTorrent::Torrent *const torrent);
+    void torrentAdded(const BitTorrent::Torrent *torrent) const;
+    void torrentFinished(const BitTorrent::Torrent *torrent);
     void allTorrentsFinished();
     void cleanup();
 
@@ -133,20 +150,29 @@ private slots:
 
 private:
     void initializeTranslation();
-    void processParams(const QStringList &params);
-    void runExternalProgram(const BitTorrent::Torrent *torrent) const;
+    void processParams(const QBtCommandLineParameters &params);
+    void runExternalProgram(const QString &programTemplate, const BitTorrent::Torrent *torrent) const;
     void sendNotificationEmail(const BitTorrent::Torrent *torrent);
-    void applyMemoryWorkingSetLimit();
+
+#ifdef QBT_USES_LIBTORRENT2
+    void applyMemoryWorkingSetLimit() const;
+#endif
+
+#ifdef Q_OS_WIN
+    void applyMemoryPriority() const;
+    void adjustThreadPriority() const;
+#endif
 
 #ifndef DISABLE_GUI
+    void createStartupProgressDialog();
 #ifdef Q_OS_MACOS
     bool event(QEvent *) override;
 #endif
 #endif
 
     ApplicationInstanceManager *m_instanceManager = nullptr;
-    bool m_running = false;
     QAtomicInt m_isCleanupRun;
+    bool m_isProcessingParamsAllowed = false;
     ShutdownDialogAction m_shutdownAct;
     QBtCommandLineParameters m_commandLineArgs;
 
@@ -155,7 +181,8 @@ private:
 
     QTranslator m_qtTranslator;
     QTranslator m_translator;
-    QStringList m_paramsQueue;
+
+    QList<QBtCommandLineParameters> m_paramsQueue;
 
     SettingValue<bool> m_storeFileLoggerEnabled;
     SettingValue<bool> m_storeFileLoggerBackup;
@@ -166,8 +193,17 @@ private:
     SettingValue<Path> m_storeFileLoggerPath;
     SettingValue<int> m_storeMemoryWorkingSetLimit;
 
+#ifdef Q_OS_WIN
+    SettingValue<MemoryPriority> m_processMemoryPriority;
+#endif
+
 #ifndef DISABLE_GUI
-    QPointer<MainWindow> m_window;
+    SettingValue<WindowState> m_startUpWindowState;
+    SettingValue<bool> m_storeNotificationTorrentAdded;
+
+    DesktopIntegration *m_desktopIntegration = nullptr;
+    MainWindow *m_window = nullptr;
+    QProgressDialog *m_startupProgressDialog = nullptr;
 #endif
 
 #ifndef DISABLE_WEBUI

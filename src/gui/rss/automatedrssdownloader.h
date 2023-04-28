@@ -66,6 +66,7 @@ private slots:
     void on_addCategoryBtn_clicked();
     void on_exportBtn_clicked();
     void on_importBtn_clicked();
+    void on_renameRuleBtn_clicked();
 
     void handleRuleCheckStateChange(QListWidgetItem *ruleItem);
     void handleFeedCheckStateChange(QListWidgetItem *feedItem);
@@ -101,12 +102,12 @@ private:
     const QString m_formatFilterJSON;
     const QString m_formatFilterLegacy;
 
-    Ui::AutomatedRssDownloader *m_ui;
-    QListWidgetItem *m_currentRuleItem;
+    Ui::AutomatedRssDownloader *m_ui = nullptr;
+    QListWidgetItem *m_currentRuleItem = nullptr;
     QSet<std::pair<QString, QString>> m_treeListEntries;
     RSS::AutoDownloadRule m_currentRule;
     QHash<QString, QListWidgetItem *> m_itemsByRuleName;
-    QRegularExpression *m_episodeRegex;
+    QRegularExpression *m_episodeRegex = nullptr;
 
     SettingValue<QSize> m_storeDialogSize;
     SettingValue<QByteArray> m_storeHSplitterSize;

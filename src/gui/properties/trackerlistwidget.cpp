@@ -36,6 +36,7 @@
 #include <QHeaderView>
 #include <QMenu>
 #include <QMessageBox>
+#include <QPointer>
 #include <QShortcut>
 #include <QStringList>
 #include <QTreeWidgetItem>
@@ -95,13 +96,13 @@ TrackerListWidget::TrackerListWidget(PropertiesWidget *properties)
     // Set DHT, PeX, LSD items
     m_DHTItem = new QTreeWidgetItem({ u""_qs,  u"** [DHT] **"_qs, u""_qs, u"0"_qs, u""_qs, u""_qs, u"0"_qs });
     insertTopLevelItem(0, m_DHTItem);
-    setRowColor(0, QColor("grey"));
+    setRowColor(0, QColorConstants::Svg::grey);
     m_PEXItem = new QTreeWidgetItem({ u""_qs,  u"** [PeX] **"_qs, u""_qs, u"0"_qs, u""_qs, u""_qs, u"0"_qs });
     insertTopLevelItem(1, m_PEXItem);
-    setRowColor(1, QColor("grey"));
+    setRowColor(1, QColorConstants::Svg::grey);
     m_LSDItem = new QTreeWidgetItem({ u""_qs,  u"** [LSD] **"_qs, u""_qs, u"0"_qs, u""_qs, u""_qs, u"0"_qs });
     insertTopLevelItem(2, m_LSDItem);
-    setRowColor(2, QColor("grey"));
+    setRowColor(2, QColorConstants::Svg::grey);
 
     // Set static items alignment
     const Qt::Alignment alignment = (Qt::AlignRight | Qt::AlignVCenter);
@@ -310,42 +311,50 @@ void TrackerListWidget::loadStickyItems(const BitTorrent::Torrent *torrent)
         m_LSDItem->setText(COL_MSG, privateMsg);
     }
 
-    // XXX: libtorrent should provide this info...
-    // Count peers from DHT, PeX, LSD
-    uint seedsDHT = 0, seedsPeX = 0, seedsLSD = 0, peersDHT = 0, peersPeX = 0, peersLSD = 0;
-    for (const BitTorrent::PeerInfo &peer : asConst(torrent->peers()))
+    using TorrentPtr = QPointer<const BitTorrent::Torrent>;
+    torrent->fetchPeerInfo([this, torrent = TorrentPtr(torrent)](const QVector<BitTorrent::PeerInfo> &peers)
     {
-        if (peer.isConnecting()) continue;
+        if (torrent != m_properties->getCurrentTorrent())
+            return;
 
-        if (peer.fromDHT())
+        // XXX: libtorrent should provide this info...
+        // Count peers from DHT, PeX, LSD
+        uint seedsDHT = 0, seedsPeX = 0, seedsLSD = 0, peersDHT = 0, peersPeX = 0, peersLSD = 0;
+        for (const BitTorrent::PeerInfo &peer : peers)
         {
-            if (peer.isSeed())
-                ++seedsDHT;
-            else
-                ++peersDHT;
-        }
-        if (peer.fromPeX())
-        {
-            if (peer.isSeed())
-                ++seedsPeX;
-            else
-                ++peersPeX;
-        }
-        if (peer.fromLSD())
-        {
-            if (peer.isSeed())
-                ++seedsLSD;
-            else
-                ++peersLSD;
-        }
-    }
+            if (peer.isConnecting())
+                continue;
 
-    m_DHTItem->setText(COL_SEEDS, QString::number(seedsDHT));
-    m_DHTItem->setText(COL_LEECHES, QString::number(peersDHT));
-    m_PEXItem->setText(COL_SEEDS, QString::number(seedsPeX));
-    m_PEXItem->setText(COL_LEECHES, QString::number(peersPeX));
-    m_LSDItem->setText(COL_SEEDS, QString::number(seedsLSD));
-    m_LSDItem->setText(COL_LEECHES, QString::number(peersLSD));
+            if (peer.fromDHT())
+            {
+                if (peer.isSeed())
+                    ++seedsDHT;
+                else
+                    ++peersDHT;
+            }
+            if (peer.fromPeX())
+            {
+                if (peer.isSeed())
+                    ++seedsPeX;
+                else
+                    ++peersPeX;
+            }
+            if (peer.fromLSD())
+            {
+                if (peer.isSeed())
+                    ++seedsLSD;
+                else
+                    ++peersLSD;
+            }
+        }
+
+        m_DHTItem->setText(COL_SEEDS, QString::number(seedsDHT));
+        m_DHTItem->setText(COL_LEECHES, QString::number(peersDHT));
+        m_PEXItem->setText(COL_SEEDS, QString::number(seedsPeX));
+        m_PEXItem->setText(COL_LEECHES, QString::number(peersPeX));
+        m_LSDItem->setText(COL_SEEDS, QString::number(seedsLSD));
+        m_LSDItem->setText(COL_LEECHES, QString::number(peersLSD));
+    });
 }
 
 void TrackerListWidget::loadTrackers()
@@ -423,17 +432,15 @@ void TrackerListWidget::loadTrackers()
         delete m_trackerItems.take(tracker);
 }
 
-// Ask the user for new trackers and add them to the torrent
-void TrackerListWidget::askForTrackers()
+void TrackerListWidget::openAddTrackersDialog()
 {
-    BitTorrent::Torrent *const torrent = m_properties->getCurrentTorrent();
-    if (!torrent) return;
+    BitTorrent::Torrent *torrent = m_properties->getCurrentTorrent();
+    if (!torrent)
+        return;
 
-    QVector<BitTorrent::TrackerEntry> trackers;
-    for (const QString &tracker : asConst(TrackersAdditionDialog::askForTrackers(this, torrent)))
-        trackers.append({tracker});
-
-    torrent->addTrackers(trackers);
+    const auto dialog = new TrackersAdditionDialog(this, torrent);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->open();
 }
 
 void TrackerListWidget::copyTrackerUrl()
@@ -567,14 +574,14 @@ void TrackerListWidget::showTrackerListMenu()
     menu->setAttribute(Qt::WA_DeleteOnClose);
 
     // Add actions
-    menu->addAction(UIThemeManager::instance()->getIcon(u"list-add"_qs), tr("Add a new tracker...")
-        , this, &TrackerListWidget::askForTrackers);
+    menu->addAction(UIThemeManager::instance()->getIcon(u"list-add"_qs), tr("Add trackers...")
+        , this, &TrackerListWidget::openAddTrackersDialog);
 
     if (!getSelectedTrackerItems().isEmpty())
     {
         menu->addAction(UIThemeManager::instance()->getIcon(u"edit-rename"_qs),tr("Edit tracker URL...")
             , this, &TrackerListWidget::editSelectedTracker);
-        menu->addAction(UIThemeManager::instance()->getIcon(u"list-remove"_qs), tr("Remove tracker")
+        menu->addAction(UIThemeManager::instance()->getIcon(u"edit-clear"_qs, u"list-remove"_qs), tr("Remove tracker")
             , this, &TrackerListWidget::deleteSelectedTrackers);
         menu->addAction(UIThemeManager::instance()->getIcon(u"edit-copy"_qs), tr("Copy tracker URL")
             , this, &TrackerListWidget::copyTrackerUrl);
@@ -582,10 +589,10 @@ void TrackerListWidget::showTrackerListMenu()
 
     if (!torrent->isPaused())
     {
-        menu->addAction(UIThemeManager::instance()->getIcon(u"view-refresh"_qs), tr("Force reannounce to selected trackers")
+        menu->addAction(UIThemeManager::instance()->getIcon(u"reannounce"_qs, u"view-refresh"_qs), tr("Force reannounce to selected trackers")
             , this, &TrackerListWidget::reannounceSelected);
         menu->addSeparator();
-        menu->addAction(UIThemeManager::instance()->getIcon(u"view-refresh"_qs), tr("Force reannounce to all trackers")
+        menu->addAction(UIThemeManager::instance()->getIcon(u"reannounce"_qs, u"view-refresh"_qs), tr("Force reannounce to all trackers")
             , this, [this]()
         {
             BitTorrent::Torrent *h = m_properties->getCurrentTorrent();

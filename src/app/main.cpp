@@ -29,6 +29,7 @@
 
 #include <QtGlobal>
 
+#include <chrono>
 #include <cstdlib>
 #include <memory>
 
@@ -79,6 +80,8 @@ Q_IMPORT_PLUGIN(QICOPlugin)
 #include "gui/utils.h"
 #endif
 
+using namespace std::chrono_literals;
+
 void displayVersion();
 bool userAgreesWithLegalNotice();
 void displayBadArgMessage(const QString &message);
@@ -114,6 +117,17 @@ int main(int argc, char *argv[])
     {
         // Create Application
         auto app = std::make_unique<Application>(argc, argv);
+
+#ifdef Q_OS_WIN
+        // QCoreApplication::applicationDirPath() needs an Application object instantiated first
+        // Let's hope that there won't be a crash before this line
+        const char *envName = "_NT_SYMBOL_PATH";
+        const QString envValue = qEnvironmentVariable(envName);
+        if (envValue.isEmpty())
+            qputenv(envName, Application::applicationDirPath().toLocal8Bit());
+        else
+            qputenv(envName, u"%1;%2"_qs.arg(envValue, Application::applicationDirPath()).toLocal8Bit());
+#endif
 
         const QBtCommandLineParameters params = app->commandLineArgs();
         if (!params.unknownParameter.isEmpty())
@@ -179,7 +193,7 @@ int main(int argc, char *argv[])
 #endif
 
             QThread::msleep(300);
-            app->sendParams(params.paramList());
+            app->callMainInstance();
 
             return EXIT_SUCCESS;
         }
@@ -218,26 +232,6 @@ int main(int argc, char *argv[])
             app->setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
 
-        if (!firstTimeUser)
-        {
-            handleChangedDefaults(DefaultPreferencesMode::Legacy);
-
-#ifndef DISABLE_GUI
-            if (!upgrade()) return EXIT_FAILURE;
-#elif defined(Q_OS_WIN)
-            if (!upgrade(_isatty(_fileno(stdin))
-                         && _isatty(_fileno(stdout)))) return EXIT_FAILURE;
-#else
-            if (!upgrade(!params.shouldDaemonize
-                         && isatty(fileno(stdin))
-                         && isatty(fileno(stdout)))) return EXIT_FAILURE;
-#endif
-        }
-        else
-        {
-            handleChangedDefaults(DefaultPreferencesMode::Current);
-        }
-
 #if defined(DISABLE_GUI) && !defined(Q_OS_WIN)
         if (params.shouldDaemonize)
         {
@@ -264,11 +258,16 @@ int main(int argc, char *argv[])
 
         registerSignalHandlers();
 
-        return app->exec(params.paramList());
+        return app->exec();
     }
     catch (const CommandLineParameterError &er)
     {
         displayBadArgMessage(er.message());
+        return EXIT_FAILURE;
+    }
+    catch (const RuntimeError &er)
+    {
+        qDebug() << er.message();
         return EXIT_FAILURE;
     }
 }
@@ -284,7 +283,7 @@ void showSplashScreen()
     painter.drawText(224 - painter.fontMetrics().horizontalAdvance(version), 270, version);
     QSplashScreen *splash = new QSplashScreen(splashImg);
     splash->show();
-    QTimer::singleShot(1500, splash, &QObject::deleteLater);
+    QTimer::singleShot(1500ms, Qt::CoarseTimer, splash, &QObject::deleteLater);
     qApp->processEvents();
 }
 #endif  // DISABLE_GUI

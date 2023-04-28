@@ -54,7 +54,9 @@ namespace BitTorrent
         bool sequential = false;
         bool firstLastPiecePriority = false;
         bool addForced = false;
+        std::optional<bool> addToQueueTop;
         std::optional<bool> addPaused;
+        std::optional<Torrent::StopCondition> stopCondition;
         PathList filePaths; // used if TorrentInfo is set
         QVector<DownloadPriority> filePriorities; // used if TorrentInfo is set
         bool skipChecking = false;

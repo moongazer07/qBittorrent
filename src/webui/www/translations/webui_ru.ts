@@ -1,4 +1,6 @@
-<?xml version="1.0" ?><!DOCTYPE TS><TS version="2.1" language="ru">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="ru">
 <context>
     <name>AboutDlg</name>
     <message>
@@ -37,8 +39,36 @@
         <translation>Создавать подпапку</translation>
     </message>
     <message>
-        <source>Don&apos;t create subfolder</source>
+        <source>Don't create subfolder</source>
         <translation>Не создавать подпапку</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>Ручной</translation>
+    </message>
+    <message>
+        <source>Automatic</source>
+        <translation>Автоматический</translation>
+    </message>
+    <message>
+        <source>Metadata received</source>
+        <translation>Метаданные получены</translation>
+    </message>
+    <message>
+        <source>Files checked</source>
+        <translation>Файлы проверены</translation>
+    </message>
+    <message>
+        <source>Stop condition:</source>
+        <translation>Условие остановки:</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Нет</translation>
+    </message>
+    <message>
+        <source>Add to top of queue</source>
+        <translation type="unfinished" />
     </message>
 </context>
 <context>
@@ -75,16 +105,20 @@
         <translation>Остановить торренты</translation>
     </message>
     <message>
-        <source>Delete torrents</source>
-        <translation>Удалить торренты</translation>
-    </message>
-    <message>
         <source>New Category</source>
         <translation>Новая категория</translation>
     </message>
     <message>
         <source>Edit category...</source>
         <translation>Править категорию…</translation>
+    </message>
+    <message>
+        <source>Remove torrents</source>
+        <translation>Удалить торренты</translation>
+    </message>
+    <message>
+        <source>Add subcategory...</source>
+        <translation type="unfinished" />
     </message>
 </context>
 <context>
@@ -270,10 +304,6 @@
         <translation>Загрузить локальный торрент</translation>
     </message>
     <message>
-        <source>Are you sure you want to delete the selected torrents from the transfer list?</source>
-        <translation>Вы уверены, что хотите удалить выделенные торренты из списка?</translation>
-    </message>
-    <message>
         <source>Save</source>
         <translation>Сохранить</translation>
     </message>
@@ -359,7 +389,11 @@
     </message>
     <message>
         <source>Original author</source>
-        <translation>Оригинальный автор</translation>
+        <translation>Изначальный автор</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to remove the selected torrents from the transfer list?</source>
+        <translation>Уверены, что хотите удалить выделенные торренты из списка?</translation>
     </message>
 </context>
 <context>
@@ -423,10 +457,6 @@
     <message>
         <source>Pause</source>
         <translation>Остановить</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Удалить</translation>
     </message>
     <message>
         <source>Pause All</source>
@@ -573,6 +603,30 @@
         <source>Filters Sidebar</source>
         <translation>Боковая панель фильтров</translation>
     </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Would you like to resume all torrents?</source>
+        <translation>Хотите возобновить все торренты?</translation>
+    </message>
+    <message>
+        <source>Would you like to pause all torrents?</source>
+        <translation>Хотите приостановить все торренты?</translation>
+    </message>
+    <message>
+        <source>Execution Log</source>
+        <translation>Журнал работы</translation>
+    </message>
+    <message>
+        <source>Log</source>
+        <translation>Журнал</translation>
+    </message>
 </context>
 <context>
     <name>OptionsDialog</name>
@@ -610,11 +664,7 @@
     </message>
     <message>
         <source>Email notification upon download completion</source>
-        <translation>Оповещать об окончании загрузки по эл. почте</translation>
-    </message>
-    <message>
-        <source>Run external program on torrent completion</source>
-        <translation>Запустить внешнюю программу по окончании загрузки торрента</translation>
+        <translation>Оповещать об окончании загрузки по электронной почте</translation>
     </message>
     <message>
         <source>IP Filtering</source>
@@ -622,7 +672,7 @@
     </message>
     <message>
         <source>Schedule the use of alternative rate limits</source>
-        <translation>Запланировать использование особых ограничений скорости</translation>
+        <translation>Запланировать включение особых ограничений скорости</translation>
     </message>
     <message>
         <source>Torrent Queueing</source>
@@ -662,7 +712,7 @@
     </message>
     <message>
         <source>Keep incomplete torrents in:</source>
-        <translation>Хранить незавершённые торренты в:</translation>
+        <translation>Хранить неполные торренты в:</translation>
     </message>
     <message>
         <source>Copy .torrent files to:</source>
@@ -674,11 +724,11 @@
     </message>
     <message>
         <source>Pre-allocate disk space for all files</source>
-        <translation>Резервировать место на диске для всех файлов</translation>
+        <translation>Предвыделять место на диске для всех файлов</translation>
     </message>
     <message>
         <source>Append .!qB extension to incomplete files</source>
-        <translation>Добавлять расширение .!qB к незавершённым файлам</translation>
+        <translation>Добавлять расширение .!qB к неполным файлам</translation>
     </message>
     <message>
         <source>Automatically add torrents from:</source>
@@ -718,7 +768,7 @@
     </message>
     <message>
         <source>Use UPnP / NAT-PMP port forwarding from my router</source>
-        <translation>Использовать UPnP / NAT-PMP для проброса портов через мой роутер</translation>
+        <translation>Пробрасывать порты с помощью UPnP/NAT-PMP в моём роутере</translation>
     </message>
     <message>
         <source>Connections Limits</source>
@@ -750,7 +800,7 @@
     </message>
     <message>
         <source>(None)</source>
-        <translation>(нет)</translation>
+        <translation type="vanished">(нет)</translation>
     </message>
     <message>
         <source>SOCKS4</source>
@@ -778,7 +828,7 @@
     </message>
     <message>
         <source>Use proxy only for torrents</source>
-        <translation>Использовать прокси только для торрентов</translation>
+        <translation type="vanished">Использовать прокси только для торрентов</translation>
     </message>
     <message>
         <source>Filter path (.dat, .p2p, .p2b):</source>
@@ -848,7 +898,7 @@
     </message>
     <message>
         <source>Privacy</source>
-        <translation>Приватность</translation>
+        <translation>Конфиденциальность</translation>
     </message>
     <message>
         <source>Enable DHT (decentralized network) to find more peers</source>
@@ -900,7 +950,7 @@
     </message>
     <message>
         <source>Use UPnP / NAT-PMP to forward the port from my router</source>
-        <translation>Использовать UPnP / NAT-PMP для проброса порта через мой роутер</translation>
+        <translation>Использовать UPnP/NAT-PMP для проброса порта через ваш роутер</translation>
     </message>
     <message>
         <source>Certificate:</source>
@@ -955,8 +1005,8 @@
         <translation>%T: Текущий трекер</translation>
     </message>
     <message>
-        <source>Tip: Encapsulate parameter with quotation marks to avoid text being cut off at whitespace (e.g., &quot;%N&quot;)</source>
-        <translation>Подсказка: Включите параметр в кавычки для защиты от обрезки на пробелах (напр., &quot;%N&quot;)</translation>
+        <source>Tip: Encapsulate parameter with quotation marks to avoid text being cut off at whitespace (e.g., "%N")</source>
+        <translation>Подсказка: Включите параметр в кавычки для защиты от обрезки на пробелах (пример, "%N")</translation>
     </message>
     <message>
         <source>The Web UI username must be at least 3 characters long.</source>
@@ -984,7 +1034,7 @@
     </message>
     <message>
         <source>Delete .torrent files afterwards</source>
-        <translation>Удалять торрент-файлы после добавления</translation>
+        <translation>Удалять торрент-файлы по добавлении</translation>
     </message>
     <message>
         <source>Download rate threshold:</source>
@@ -1024,7 +1074,7 @@
     </message>
     <message>
         <source>When Torrent Category changed:</source>
-        <translation>При смене категории торрента:</translation>
+        <translation>По смене категории торрента:</translation>
     </message>
     <message>
         <source>Relocate affected torrents</source>
@@ -1044,7 +1094,7 @@
     </message>
     <message>
         <source>When Default Save Path changed:</source>
-        <translation>При смене пути сохранения по умолчанию:</translation>
+        <translation>По смене пути сохранения по умолчанию:</translation>
     </message>
     <message>
         <source>Enable Host header validation</source>
@@ -1056,7 +1106,7 @@
     </message>
     <message>
         <source>When Category Save Path changed:</source>
-        <translation>При смене пути сохранения категории:</translation>
+        <translation>По смене пути сохранения категории:</translation>
     </message>
     <message>
         <source>seconds</source>
@@ -1123,10 +1173,6 @@
         <translation>Анти-лич</translation>
     </message>
     <message>
-        <source>Enable OS cache:</source>
-        <translation>Разрешить кэш ОС:</translation>
-    </message>
-    <message>
         <source>When ratio reaches</source>
         <translation>По достижении рейтинга раздачи</translation>
     </message>
@@ -1140,7 +1186,7 @@
     </message>
     <message>
         <source>File pool size:</source>
-        <translation>Размера пула файлов:</translation>
+        <translation>Размер пула файлов:</translation>
     </message>
     <message>
         <source>Any interface</source>
@@ -1180,15 +1226,15 @@
     </message>
     <message>
         <source>Outgoing ports (Min) [0: Disabled]:</source>
-        <translation>Минимум исходящих портов [0: отключено]:</translation>
+        <translation type="vanished">Минимум исходящих портов [0: отключено]:</translation>
     </message>
     <message>
         <source>Recheck torrents on completion:</source>
-        <translation>Проверить торрент по окончании загрузки:</translation>
+        <translation>Перепроверять торренты по завершении:</translation>
     </message>
     <message>
         <source>Allow encryption</source>
-        <translation>Разрешить шифрование</translation>
+        <translation>Разрешать шифрование</translation>
     </message>
     <message>
         <source>Send upload piece suggestions:</source>
@@ -1204,7 +1250,7 @@
     </message>
     <message>
         <source>Outgoing ports (Max) [0: Disabled]:</source>
-        <translation>Максимум исходящих портов [0: отключено]:</translation>
+        <translation type="vanished">Максимум исходящих портов [0: отключено]:</translation>
     </message>
     <message>
         <source>Asynchronous I/O threads:</source>
@@ -1220,7 +1266,7 @@
     </message>
     <message>
         <source>Peer proportional (throttles TCP)</source>
-        <translation>Пропорционально пирам (регулирует TCP)</translation>
+        <translation>Соразмерно пирам (регулирует TCP)</translation>
     </message>
     <message>
         <source>Fixed slots</source>
@@ -1283,12 +1329,8 @@
         <translation>заблокировать на:</translation>
     </message>
     <message>
-        <source>Use piece extent affinity (requires libtorrent &gt;= 1.2.2):</source>
-        <translation>Использовать группировку родственных частей (требует libtorrent &gt;= 1.2.2):</translation>
-    </message>
-    <message>
         <source>Stop tracker timeout:</source>
-        <translation>Тайм-аут остановки трекера:</translation>
+        <translation type="vanished">Тайм-аут остановки трекера:</translation>
     </message>
     <message>
         <source>Ban client after consecutive failures:</source>
@@ -1300,7 +1342,7 @@
     </message>
     <message>
         <source>UPnP lease duration [0: Permanent lease]:</source>
-        <translation>Срок аренды UPnP [0: постоянный]:</translation>
+        <translation type="vanished">Срок аренды UPnP [0: постоянный]:</translation>
     </message>
     <message>
         <source>Header: value pairs, one per line</source>
@@ -1316,15 +1358,15 @@
     </message>
     <message>
         <source>Enable fetching RSS feeds</source>
-        <translation>Включить получение RSS-каналов</translation>
+        <translation>Включить получение RSS-лент</translation>
     </message>
     <message>
         <source>Hashing threads (requires libtorrent &gt;= 2.0):</source>
-        <translation>Потоки хеширования (требует libtorrent &gt;= 2.0):</translation>
+        <translation type="vanished">Потоки хеширования (требует libtorrent &gt;= 2.0):</translation>
     </message>
     <message>
         <source>Coalesce reads &amp; writes (requires libtorrent &lt; 2.0):</source>
-        <translation>Объединять операции чтения и записи (требует libtorrent &gt;= 2.0):</translation>
+        <translation type="vanished">Совмещать операции чтения и записи (нужен libtorrent &gt;= 2.0):</translation>
     </message>
     <message>
         <source>Peer turnover threshold percentage:</source>
@@ -1336,7 +1378,7 @@
     </message>
     <message>
         <source>RSS</source>
-        <translation>RSS</translation>
+        <translation>RSS-ленты</translation>
     </message>
     <message>
         <source>Network interface:</source>
@@ -1352,11 +1394,11 @@
     </message>
     <message>
         <source>Download REPACK/PROPER episodes</source>
-        <translation>Загрузить эпизоды REPACK/PROPER</translation>
+        <translation>Загружать эпизоды REPACK/PROPER</translation>
     </message>
     <message>
         <source>Feeds refresh interval:</source>
-        <translation>Интервал обновления каналов:</translation>
+        <translation>Интервал обновления лент:</translation>
     </message>
     <message>
         <source>Peer turnover disconnect percentage:</source>
@@ -1364,11 +1406,7 @@
     </message>
     <message>
         <source>Maximum number of articles per feed:</source>
-        <translation>Максимум статей на канал:</translation>
-    </message>
-    <message>
-        <source>Max concurrent HTTP announces (requires libtorrent &gt;= 1.2.7):</source>
-        <translation>Максимум одновременных анонсов HTTP (требует libtorrent &gt;= 1.2.7):</translation>
+        <translation>Максимум статей для ленты:</translation>
     </message>
     <message>
         <source> min</source>
@@ -1380,11 +1418,11 @@
     </message>
     <message>
         <source>Optional IP address to bind to:</source>
-        <translation>Выбранный IP-адрес для привязки:</translation>
+        <translation>Необязательный IP-адрес для привязки:</translation>
     </message>
     <message>
         <source>Disallow connection to peers on privileged ports:</source>
-        <translation>Не соединять пиров по общеизвестным портам:</translation>
+        <translation>Не соединяться с пирами по общеизвестным портам:</translation>
     </message>
     <message>
         <source>Enable auto downloading of RSS torrents</source>
@@ -1396,11 +1434,11 @@
     </message>
     <message>
         <source>Disk cache (requires libtorrent &lt; 2.0):</source>
-        <translation>Кэш диска (требует libtorrent &gt;= 2.0):</translation>
+        <translation type="vanished">Кэш диска в памяти (требует libtorrent &lt; 2.0):</translation>
     </message>
     <message>
         <source>Disk cache expiry interval (requires libtorrent &lt; 2.0):</source>
-        <translation>Интервал очистки кэша диска (требует libtorrent &lt; 2.0):</translation>
+        <translation type="vanished">Интервал очистки кэша диска (требует libtorrent &lt; 2.0):</translation>
     </message>
     <message>
         <source>Validate HTTPS tracker certificate:</source>
@@ -1409,10 +1447,6 @@
     <message>
         <source>Peer connection protocol:</source>
         <translation>Протокол подключения к пирам:</translation>
-    </message>
-    <message>
-        <source>Support internationalized domain name (IDN) (requires libtorrent &gt;= 1.2.12):</source>
-        <translation>Поддерживать нелатинские имена доменов (IDN) (требует libtorrent &gt;= 1.2.12):</translation>
     </message>
     <message>
         <source>Torrent content layout:</source>
@@ -1427,7 +1461,7 @@
         <translation>Исходное</translation>
     </message>
     <message>
-        <source>Don&apos;t create subfolder</source>
+        <source>Don't create subfolder</source>
         <translation>Не создавать подпапку</translation>
     </message>
     <message>
@@ -1448,7 +1482,7 @@
     </message>
     <message>
         <source>Reannounce to all trackers when IP or port changed:</source>
-        <translation>Реанонсировать на все трекеры при смене IP или порта:</translation>
+        <translation>Переанонсировать на все трекеры по смене IP/порта:</translation>
     </message>
     <message>
         <source>Trusted proxies list:</source>
@@ -1472,7 +1506,7 @@
     </message>
     <message>
         <source>Set to 0 to let your system pick an unused port</source>
-        <translation>Установите равным 0, чтобы ваша система могла выбрать неиспользуемый порт</translation>
+        <translation>Укажите «0», чтобы ваша система сама подобрала неиспользуемый порт</translation>
     </message>
     <message>
         <source>Server-side request forgery (SSRF) mitigation:</source>
@@ -1488,7 +1522,7 @@
     </message>
     <message>
         <source>Maximum outstanding requests to a single peer:</source>
-        <translation>Максимум невыполненных запросов к одному пиру:</translation>
+        <translation>Максимум нерешённых запросов к одному пиру:</translation>
     </message>
     <message>
         <source>Max active checking torrents:</source>
@@ -1500,7 +1534,7 @@
     </message>
     <message>
         <source>Default</source>
-        <translation>Стандартная</translation>
+        <translation>Стандартный</translation>
     </message>
     <message>
         <source>POSIX-compliant</source>
@@ -1512,11 +1546,247 @@
     </message>
     <message>
         <source>Disk IO type (libtorrent &gt;= 2.0; requires restart):</source>
-        <translation>Тип дискового ввода-вывода (libtorrent &gt;= 2.0; требует перезапуск):</translation>
+        <translation type="vanished">Тип ввода-вывода диска (libtorrent &gt;= 2.0; нужен перезапуск):</translation>
     </message>
     <message>
-        <source>Physical memory (RAM) usage limit:</source>
-        <translation>Предел виртуальной памяти:</translation>
+        <source>Write-through (requires libtorrent &gt;= 2.0.6)</source>
+        <translation type="vanished">Сквозная запись (требует libtorrent &gt;= 2.0.6)</translation>
+    </message>
+    <message>
+        <source>It controls the internal state update interval which in turn will affect UI updates</source>
+        <translation>Управляет периодом обновления внутреннего состояния, влияющим на частоту обновления интерфейса</translation>
+    </message>
+    <message>
+        <source>Disk IO read mode:</source>
+        <translation>Режим чтения ввода-вывода с диска:</translation>
+    </message>
+    <message>
+        <source>Disable OS cache</source>
+        <translation>Отключить кэш ОС</translation>
+    </message>
+    <message>
+        <source>Disk IO write mode:</source>
+        <translation>Режим записи ввода-вывода с диска:</translation>
+    </message>
+    <message>
+        <source>Use piece extent affinity:</source>
+        <translation>Группировать смежные части:</translation>
+    </message>
+    <message>
+        <source>Max concurrent HTTP announces:</source>
+        <translation>Максимум одновременных анонсов HTTP:</translation>
+    </message>
+    <message>
+        <source>Enable OS cache</source>
+        <translation>Включить кэш ОС</translation>
+    </message>
+    <message>
+        <source>Refresh interval:</source>
+        <translation>Интервал обновления:</translation>
+    </message>
+    <message>
+        <source>Physical memory (RAM) usage limit (applied if libtorrent &gt;= 2.0):</source>
+        <translation type="vanished">Предел виртуальной памяти (только для libtorrent &gt;= 2.0):</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>мс</translation>
+    </message>
+    <message>
+        <source>Excluded file names</source>
+        <translation>Исключаемые имена файлов</translation>
+    </message>
+    <message>
+        <source>Support internationalized domain name (IDN):</source>
+        <translation>Поддерживать нелатинские имена доменов (IDN):</translation>
+    </message>
+    <message>
+        <source>Run external program on torrent finished</source>
+        <translation>Запускать внешнюю программу по завершении торрента</translation>
+    </message>
+    <message>
+        <source>Whitelist for filtering HTTP Host header values.
+In order to defend against DNS rebinding attack,
+you should put in domain names used by WebUI server.
+
+Use ';' to split multiple entries. Can use wildcard '*'.</source>
+        <translation>Белый список фильтра заголовков HTTP-хоста.
+С целью защиты от атаки DNS вы должны указать
+доменные имена для сервера веб-интерфейса.
+
+Используйте «;» для разделения имён. Допустимы шаблоны типа «*».</translation>
+    </message>
+    <message>
+        <source>Run external program on torrent added</source>
+        <translation>Запускать внешнюю программу по добавлении торрента</translation>
+    </message>
+    <message>
+        <source>HTTPS certificate should not be empty</source>
+        <translation>Сертификат HTTPS не может быть пустым</translation>
+    </message>
+    <message>
+        <source>Specify reverse proxy IPs (or subnets, e.g. 0.0.0.0/24) in order to use forwarded client address (X-Forwarded-For header). Use ';' to split multiple entries.</source>
+        <translation>Укажите IP-адреса (или подсети, напр., 0.0.0.0/24) обратных прокси-серверов, чтобы использовать перенаправленный адрес клиента (заголовок X-Forwarded-For). Используйте «;» для разделения нескольких записей.</translation>
+    </message>
+    <message>
+        <source>HTTPS key should not be empty</source>
+        <translation>Ключ HTTPS не может быть пустым</translation>
+    </message>
+    <message>
+        <source>Run external program</source>
+        <translation>Запуск внешней программы</translation>
+    </message>
+    <message>
+        <source>Files checked</source>
+        <translation>Файлы проверены</translation>
+    </message>
+    <message>
+        <source>Enable port forwarding for embedded tracker:</source>
+        <translation>Включить проброс портов для встроенного трекера:</translation>
+    </message>
+    <message>
+        <source>If checked, hostname lookups are done via the proxy.</source>
+        <translation>Если отмечено, поиск имени хоста выполняется через прокси.</translation>
+    </message>
+    <message>
+        <source>Use proxy for hostname lookup</source>
+        <translation>Использовать прокси для поиска имени хоста</translation>
+    </message>
+    <message>
+        <source>Metadata received</source>
+        <translation>Метаданные получены</translation>
+    </message>
+    <message>
+        <source>Torrent stop condition:</source>
+        <translation>Условие остановки торрента:</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Нет</translation>
+    </message>
+    <message>
+        <source>Example: 172.17.32.0/24, fdff:ffff:c8::/40</source>
+        <translation>Пример: 172.17.32.0/24, fdff:ffff:c8::/40</translation>
+    </message>
+    <message>
+        <source>SQLite database (experimental)</source>
+        <translation>База данных SQLite (пробная)</translation>
+    </message>
+    <message>
+        <source>Resume data storage type (requires restart):</source>
+        <translation>Хранилище данных возобновления (нужен перезапуск):</translation>
+    </message>
+    <message>
+        <source>Fastresume files</source>
+        <translation>Файлы быстрого возобновления</translation>
+    </message>
+    <message>
+        <source>Backup the log file after:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>days</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Log file</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Behavior</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Delete backup logs older than:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Use proxy for BitTorrent purposes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>years</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Save path:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>months</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Remember Multi-Rename settings</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Use proxy for general purposes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Use proxy for RSS purposes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Disk cache expiry interval (requires libtorrent &amp;lt; 2.0):</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Physical memory (RAM) usage limit (applied if libtorrent &amp;gt;= 2.0):</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Disk cache (requires libtorrent &amp;lt; 2.0):</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Socket send buffer size [0: system default]:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Coalesce reads &amp;amp; writes (requires libtorrent &amp;lt; 2.0):</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Outgoing ports (Max) [0: disabled]:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Socket receive buffer size [0: system default]:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Use Subcategories</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Disk IO type (libtorrent &amp;gt;= 2.0; requires restart):</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Add to top of queue</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Write-through (requires libtorrent &amp;gt;= 2.0.6)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Stop tracker timeout [0: disabled]:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Outgoing ports (Min) [0: disabled]:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Hashing threads (requires libtorrent &amp;gt;= 2.0):</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>UPnP lease duration [0: permanent lease]:</source>
+        <translation type="unfinished" />
     </message>
 </context>
 <context>
@@ -1570,7 +1840,7 @@
     <message>
         <source>Relevance</source>
         <comment>i.e: How relevant this peer is to us. How many pieces it has that we don't.</comment>
-        <translation>Актуальность</translation>
+        <translation>Годность</translation>
     </message>
     <message>
         <source>Files</source>
@@ -1583,7 +1853,7 @@
     </message>
     <message>
         <source>Are you sure you want to permanently ban the selected peers?</source>
-        <translation>Вы уверены, что хотите навсегда заблокировать выбранных пиров?</translation>
+        <translation>Уверены, что хотите навсегда заблокировать выбранных пиров?</translation>
     </message>
     <message>
         <source>Copy IP:port</source>
@@ -1596,6 +1866,10 @@
     <message>
         <source>Add peers...</source>
         <translation>Добавить пиров…</translation>
+    </message>
+    <message>
+        <source>Peer ID Client</source>
+        <translation>ИД клиента</translation>
     </message>
 </context>
 <context>
@@ -1664,7 +1938,7 @@
     </message>
     <message>
         <source>ETA:</source>
-        <translation>Осталось времени:</translation>
+        <translation>Расчётное время:</translation>
     </message>
     <message>
         <source>Uploaded:</source>
@@ -1818,6 +2092,66 @@
         <source>Progress:</source>
         <translation>Прогресс:</translation>
     </message>
+    <message>
+        <source>Use regular expressions</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Filename</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Filename + Extension</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Enumerate Files</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Rename failed: file or folder already exists</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Match all occurences</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Toggle Selection</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Replacement Input</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Extension</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Replace All</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Include files</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Include folders</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Search Files</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Case sensitive</source>
+        <translation type="unfinished" />
+    </message>
 </context>
 <context>
     <name>ScanFoldersModel</name>
@@ -1924,7 +2258,7 @@
     <name>StatusBar</name>
     <message>
         <source>DHT: %1 nodes</source>
-        <translation>DHT: %1 узлов</translation>
+        <translation>Узлы DHT: %1</translation>
     </message>
 </context>
 <context>
@@ -1964,7 +2298,7 @@
     </message>
     <message>
         <source>Errored (0)</source>
-        <translation>С ошибкой (0)</translation>
+        <translation>Ошибка (0)</translation>
     </message>
     <message>
         <source>All (%1)</source>
@@ -2000,7 +2334,7 @@
     </message>
     <message>
         <source>Errored (%1)</source>
-        <translation>С ошибкой (%1)</translation>
+        <translation>Ошибка (%1)</translation>
     </message>
     <message>
         <source>Stalled Uploading (%1)</source>
@@ -2088,7 +2422,7 @@
     <message>
         <source>ETA</source>
         <comment>i.e: Estimated Time of Arrival / Time left</comment>
-        <translation>Время</translation>
+        <translation>Расчётное время</translation>
     </message>
     <message>
         <source>Category</source>
@@ -2175,7 +2509,7 @@
     <message>
         <source>Last Activity</source>
         <comment>Time passed since a chunk was downloaded/uploaded</comment>
-        <translation>Активность</translation>
+        <translation>Последняя активность</translation>
     </message>
     <message>
         <source>Total Size</source>
@@ -2223,7 +2557,7 @@
     </message>
     <message>
         <source>Not contacted yet</source>
-        <translation>Нет соединения</translation>
+        <translation>Связь не установлена</translation>
     </message>
     <message>
         <source>N/A</source>
@@ -2240,10 +2574,6 @@
     <message>
         <source>Copy tracker URL</source>
         <translation>Копировать адрес трекера</translation>
-    </message>
-    <message>
-        <source>Add a new tracker...</source>
-        <translation>Добавить новый трекер…</translation>
     </message>
     <message>
         <source>Edit tracker URL...</source>
@@ -2293,16 +2623,28 @@
         <source>Times Downloaded</source>
         <translation>Число загрузок</translation>
     </message>
+    <message>
+        <source>Add trackers...</source>
+        <translation>Добавить трекеры…</translation>
+    </message>
+    <message>
+        <source>Renamed</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished" />
+    </message>
 </context>
 <context>
     <name>TrackersAdditionDialog</name>
     <message>
-        <source>Trackers addition dialog</source>
-        <translation>Окно добавления трекеров</translation>
-    </message>
-    <message>
         <source>List of trackers to add (one per line):</source>
         <translation>Список трекеров для добавления (один трекер на строку):</translation>
+    </message>
+    <message>
+        <source>Add trackers</source>
+        <translation>Добавить трекеры</translation>
     </message>
 </context>
 <context>
@@ -2338,7 +2680,7 @@
     </message>
     <message>
         <source>Errored</source>
-        <translation>С ошибкой</translation>
+        <translation>Ошибка</translation>
     </message>
     <message>
         <source>[F] Downloading</source>
@@ -2399,6 +2741,10 @@
         <source>Trackers</source>
         <translation>Трекеры</translation>
     </message>
+    <message>
+        <source>Collapse/expand</source>
+        <translation type="unfinished" />
+    </message>
 </context>
 <context>
     <name>TransferListWidget</name>
@@ -2428,11 +2774,6 @@
         <source>Pause</source>
         <comment>Pause the torrent</comment>
         <translation>Остановить</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <comment>Delete the torrent</comment>
-        <translation>Удалить</translation>
     </message>
     <message>
         <source>Limit share ratio...</source>
@@ -2472,7 +2813,7 @@
     </message>
     <message>
         <source>Download first and last pieces first</source>
-        <translation>Загружать с первой и последней части</translation>
+        <translation>Загружать крайние части первыми</translation>
     </message>
     <message>
         <source>Automatic Torrent Management</source>
@@ -2507,10 +2848,6 @@
     <message>
         <source>Download in sequential order</source>
         <translation>Загружать последовательно</translation>
-    </message>
-    <message>
-        <source>Force Recheck</source>
-        <translation>Проверить принудительно</translation>
     </message>
     <message>
         <source>New Category</source>
@@ -2590,7 +2927,19 @@
     </message>
     <message>
         <source>Export .torrent</source>
-        <translation>Экспорт .torrent</translation>
+        <translation>Экспорт в файл .torrent</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Rename Files...</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Renaming</source>
+        <translation type="unfinished" />
     </message>
 </context>
 <context>
@@ -2601,11 +2950,11 @@
     </message>
     <message>
         <source>Use global share limit</source>
-        <translation>Использовать общее ограничение раздачи</translation>
+        <translation>Следовать общему ограничению раздачи</translation>
     </message>
     <message>
         <source>Set no share limit</source>
-        <translation>Убрать ограничение раздачи</translation>
+        <translation>Снять ограничения раздачи</translation>
     </message>
     <message>
         <source>Set share limit to</source>
@@ -2626,16 +2975,12 @@
 <context>
     <name>confirmDeletionDlg</name>
     <message>
-        <source>Deletion confirmation</source>
-        <translation>Подтверждение удаления</translation>
+        <source>Also permanently delete the files</source>
+        <translation>Также безвозвратно удалить файлы</translation>
     </message>
     <message>
-        <source>Also delete the files on the hard disk</source>
-        <translation>Безвозвратно удалить загруженные файлы с диска</translation>
-    </message>
-    <message>
-        <source>Deletion confirmation - qBittorrent</source>
-        <translation>Подтверждение удаления - qBittorrent</translation>
+        <source>Remove torrent(s)</source>
+        <translation>Удалить торрент(ы)</translation>
     </message>
 </context>
 <context>
@@ -2698,7 +3043,7 @@
     <message>
         <source>%1h %2m</source>
         <comment>e.g: 3hours 5minutes</comment>
-        <translation>%1 ч %2 мин</translation>
+        <translation>%1 ч %2 м</translation>
     </message>
     <message>
         <source>%1d %2h</source>
@@ -2713,12 +3058,12 @@
     <message>
         <source>&lt; 1m</source>
         <comment>&lt; 1 minute</comment>
-        <translation>&lt; 1 мин</translation>
+        <translation>&lt; 1 м</translation>
     </message>
     <message>
         <source>%1m</source>
         <comment>e.g: 10minutes</comment>
-        <translation>%1 мин</translation>
+        <translation>%1 м</translation>
     </message>
     <message>
         <source>%1y %2d</source>
@@ -2829,6 +3174,14 @@
         <source>showing</source>
         <translation>отображается</translation>
     </message>
+    <message>
+        <source>Click the "Search plugins..." button at the bottom right of the window to install some.</source>
+        <translation>Нажмите на кнопку «Поисковые плагины…» в правой нижней части окна для их установки.</translation>
+    </message>
+    <message>
+        <source>There aren't any search plugins installed.</source>
+        <translation>Отсутствуют установленные поисковые плагины.</translation>
+    </message>
 </context>
 <context>
     <name>PluginSelectDlg</name>
@@ -2857,7 +3210,7 @@
         <translation>Включён</translation>
     </message>
     <message>
-        <source>Warning: Be sure to comply with your country&apos;s copyright laws when downloading torrents from any of these search engines.</source>
+        <source>Warning: Be sure to comply with your country's copyright laws when downloading torrents from any of these search engines.</source>
         <translation>Предупреждение: Обязательно соблюдайте законы об авторских правах вашей страны при загрузке торрентов из этих поисковых систем.</translation>
     </message>
     <message>
@@ -2953,10 +3306,6 @@
         <translation>Добавить метку…</translation>
     </message>
     <message>
-        <source>Delete torrents</source>
-        <translation>Удалить торренты</translation>
-    </message>
-    <message>
         <source>Tag:</source>
         <translation>Метка:</translation>
     </message>
@@ -2979,6 +3328,10 @@
     <message>
         <source>Remove tag</source>
         <translation>Удалить метку</translation>
+    </message>
+    <message>
+        <source>Remove torrents</source>
+        <translation>Удалить торренты</translation>
     </message>
 </context>
 <context>
@@ -3016,7 +3369,7 @@
     </message>
     <message>
         <source>Home Page:</source>
-        <translation>Домашняя страница:</translation>
+        <translation>Сайт:</translation>
     </message>
     <message>
         <source>Greece</source>
@@ -3028,7 +3381,7 @@
     </message>
     <message>
         <source>An advanced BitTorrent client programmed in C++, based on Qt toolkit and libtorrent-rasterbar.</source>
-        <translation>Продвинутый клиент сети БитТоррент, написанный на языке C++ с использованием фреймворка Qt и библиотеки libtorrent-rasterbar.</translation>
+        <translation>Передовой клиент сети БитТоррент, написанный на языке C++ с использованием фреймворка Qt и библиотеки libtorrent-rasterbar.</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3131,6 +3484,10 @@
         <source>New name:</source>
         <translation>Новое имя:</translation>
     </message>
+    <message>
+        <source>Renaming)</source>
+        <translation type="unfinished" />
+    </message>
 </context>
 <context>
     <name>RSSWidget</name>
@@ -3140,7 +3497,7 @@
     </message>
     <message>
         <source>Please choose a new name for this RSS feed</source>
-        <translation>Пожалуйста, укажите новое имя для этого RSS-канала</translation>
+        <translation>Пожалуйста, укажите новое имя для этой RSS-ленты</translation>
     </message>
     <message>
         <source>Please choose a folder name</source>
@@ -3148,7 +3505,7 @@
     </message>
     <message>
         <source>New feed name:</source>
-        <translation>Новое имя канала:</translation>
+        <translation>Новое имя ленты:</translation>
     </message>
     <message>
         <source>Update all</source>
@@ -3168,11 +3525,11 @@
     </message>
     <message>
         <source>Update all feeds</source>
-        <translation>Обновить все каналы</translation>
+        <translation>Обновить все ленты</translation>
     </message>
     <message>
         <source>Copy feed URL</source>
-        <translation>Копировать адрес канала</translation>
+        <translation>Копировать адрес ленты</translation>
     </message>
     <message>
         <source>Torrents: (double-click to download)</source>
@@ -3188,7 +3545,7 @@
     </message>
     <message>
         <source>Feed URL:</source>
-        <translation>Адрес канала:</translation>
+        <translation>Адрес ленты:</translation>
     </message>
     <message>
         <source>New folder...</source>
@@ -3208,11 +3565,11 @@
     </message>
     <message>
         <source>Please type a RSS feed URL</source>
-        <translation>Пожалуйста, введите адрес RSS-канала</translation>
+        <translation>Пожалуйста, введите адрес RSS-ленты</translation>
     </message>
     <message>
         <source>Fetching of RSS feeds is disabled now! You can enable it in application settings.</source>
-        <translation>Получение RSS в данный момент отключено! Вы можете включить его в настройках приложения.</translation>
+        <translation>Получение RSS сейчас отключено! Вы можете включить его в настройках приложения.</translation>
     </message>
     <message>
         <source>Deletion confirmation</source>
@@ -3220,7 +3577,7 @@
     </message>
     <message>
         <source>Are you sure you want to delete the selected RSS feeds?</source>
-        <translation>Вы уверены, что хотите удалить выбранные RSS-каналы?</translation>
+        <translation>Уверены, что хотите удалить выбранные RSS-ленты?</translation>
     </message>
     <message>
         <source>New subscription...</source>
@@ -3255,7 +3612,7 @@
     </message>
     <message>
         <source>Auto downloading of RSS torrents is disabled now! You can enable it in application settings.</source>
-        <translation>Автозагрузка торрентов из RSS в данный момент отключена! Вы можете включить её в настройках приложения.</translation>
+        <translation>Автозагрузка торрентов из RSS сейчас отключена! Вы можете включить её в настройках приложения.</translation>
     </message>
     <message>
         <source>Rule Definition</source>
@@ -3319,7 +3676,7 @@
     </message>
     <message>
         <source>Are you sure you want to clear the list of downloaded episodes for the selected rule?</source>
-        <translation>Вы уверены, что хотите очистить список загруженных эпизодов для выбранного правила?</translation>
+        <translation>Уверены, что хотите очистить список загруженных эпизодов для выбранного правила?</translation>
     </message>
     <message>
         <source>Must Contain:</source>
@@ -3347,7 +3704,7 @@
     </message>
     <message>
         <source>Are you sure you want to remove the selected download rules?</source>
-        <translation>Вы уверены, что хотите удалить выбранные правила загрузки?</translation>
+        <translation>Уверены, что хотите удалить выбранные правила загрузки?</translation>
     </message>
     <message>
         <source>Use global settings</source>
@@ -3403,7 +3760,7 @@
     </message>
     <message>
         <source>Apply Rule to Feeds:</source>
-        <translation>Применить правило к каналам:</translation>
+        <translation>Применить правило к лентам:</translation>
     </message>
     <message>
         <source> days</source>
@@ -3472,16 +3829,12 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
         <translation>Исходное</translation>
     </message>
     <message>
-        <source>Don&apos;t create subfolder</source>
+        <source>Don't create subfolder</source>
         <translation>Не создавать подпапку</translation>
     </message>
 </context>
 <context>
     <name>TrackerFiltersList</name>
-    <message>
-        <source>Delete torrents</source>
-        <translation>Удалить торренты</translation>
-    </message>
     <message>
         <source>Resume torrents</source>
         <translation>Возобновить торренты</translation>
@@ -3498,16 +3851,155 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
         <source>Pause torrents</source>
         <translation>Остановить</translation>
     </message>
+    <message>
+        <source>Remove torrents</source>
+        <translation>Удалить торренты</translation>
+    </message>
 </context>
 <context>
     <name>FeedListWidget</name>
     <message>
         <source>RSS feeds</source>
-        <translation>RSS-каналы</translation>
+        <translation>RSS-ленты</translation>
     </message>
     <message>
         <source>Unread</source>
         <translation>Непрочитанные</translation>
+    </message>
+</context>
+<context>
+    <name>ExecutionLogWidget</name>
+    <message>
+        <source>General</source>
+        <translation>Главное</translation>
+    </message>
+    <message>
+        <source>Blocked</source>
+        <translation>Запрещённое</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Неизвестное</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Все</translation>
+    </message>
+    <message>
+        <source>showing</source>
+        <translation>отображается</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Копировать</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>Выбрать все</translation>
+    </message>
+    <message>
+        <source>ID</source>
+        <translation>ИД</translation>
+    </message>
+    <message>
+        <source>Log Type</source>
+        <translation>Тип журнала</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Очистить</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>Предупреждение</translation>
+    </message>
+    <message>
+        <source>Information Messages</source>
+        <translation>Информационные сообщения</translation>
+    </message>
+    <message>
+        <source>Warning Messages</source>
+        <translation>Предупреждения</translation>
+    </message>
+    <message>
+        <source>Filter logs</source>
+        <translation>Фильтр журналов</translation>
+    </message>
+    <message>
+        <source>Blocked IPs</source>
+        <translation>Запрещённые IP</translation>
+    </message>
+    <message>
+        <source>out of</source>
+        <translation>из</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Статус</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Метка времени</translation>
+    </message>
+    <message>
+        <source>Clear All</source>
+        <translation>Очистить все</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>Сообщение</translation>
+    </message>
+    <message>
+        <source>Log Levels:</source>
+        <translation>Уровни журнала:</translation>
+    </message>
+    <message>
+        <source>Reason</source>
+        <translation>Причина</translation>
+    </message>
+    <message>
+        <source>item</source>
+        <translation>запись</translation>
+    </message>
+    <message>
+        <source>IP</source>
+        <translation>IP-адрес</translation>
+    </message>
+    <message>
+        <source>Banned</source>
+        <translation>Запрещённое</translation>
+    </message>
+    <message>
+        <source>Normal Messages</source>
+        <translation>Обычные сообщения</translation>
+    </message>
+    <message>
+        <source>Critical</source>
+        <translation>Важные</translation>
+    </message>
+    <message>
+        <source>Critical Messages</source>
+        <translation>Важные сообщения</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation>Обычные</translation>
+    </message>
+    <message>
+        <source>items</source>
+        <translation>записи</translation>
+    </message>
+    <message>
+        <source>Results</source>
+        <translation>Результаты</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>Информационный</translation>
+    </message>
+    <message>
+        <source>Choose a log level...</source>
+        <translation>Выберите уровень журнала…</translation>
     </message>
 </context>
 </TS>

@@ -75,6 +75,7 @@
 
 #include "base/3rdparty/expected.hpp"
 #include "base/settingvalue.h"
+#include "base/utils/thread.h"
 
 class QThread;
 
@@ -115,6 +116,8 @@ namespace RSS
 
         nonstd::expected<void, QString> addFolder(const QString &path);
         nonstd::expected<void, QString> addFeed(const QString &url, const QString &path);
+        nonstd::expected<void, QString> setFeedURL(const QString &path, const QString &url);
+        nonstd::expected<void, QString> setFeedURL(Feed *feed, const QString &url);
         nonstd::expected<void, QString> moveItem(const QString &itemPath, const QString &destPath);
         nonstd::expected<void, QString> moveItem(Item *item, const QString &destPath);
         nonstd::expected<void, QString> removeItem(const QString &itemPath);
@@ -137,6 +140,7 @@ namespace RSS
         void itemAboutToBeRemoved(Item *item);
         void feedIconLoaded(Feed *feed);
         void feedStateChanged(Feed *feed);
+        void feedURLChanged(Feed *feed, const QString &oldURL);
 
     private slots:
         void handleItemAboutToBeDestroyed(Item *item);
@@ -158,9 +162,9 @@ namespace RSS
         CachedSettingValue<bool> m_storeProcessingEnabled;
         CachedSettingValue<int> m_storeRefreshInterval;
         CachedSettingValue<int> m_storeMaxArticlesPerFeed;
-        QThread *m_workingThread;
-        AsyncFileStorage *m_confFileStorage;
-        AsyncFileStorage *m_dataFileStorage;
+        Utils::Thread::UniquePtr m_workingThread;
+        AsyncFileStorage *m_confFileStorage = nullptr;
+        AsyncFileStorage *m_dataFileStorage = nullptr;
         QTimer m_refreshTimer;
         QHash<QString, Item *> m_itemsByPath;
         QHash<QUuid, Feed *> m_feedsByUID;

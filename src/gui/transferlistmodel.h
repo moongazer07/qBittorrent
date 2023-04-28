@@ -81,6 +81,9 @@ public:
         TR_SEEN_COMPLETE_DATE,
         TR_LAST_ACTIVITY,
         TR_AVAILABILITY,
+        TR_DOWNLOAD_PATH,
+        TR_INFOHASH_V1,
+        TR_INFOHASH_V2,
 
         NB_COLUMNS
     };
@@ -103,7 +106,7 @@ public:
     BitTorrent::Torrent *torrentHandle(const QModelIndex &index) const;
 
 private slots:
-    void addTorrent(BitTorrent::Torrent *const torrent);
+    void addTorrents(const QVector<BitTorrent::Torrent *> &torrents);
     void handleTorrentAboutToBeRemoved(BitTorrent::Torrent *const torrent);
     void handleTorrentStatusUpdated(BitTorrent::Torrent *const torrent);
     void handleTorrentsUpdated(const QVector<BitTorrent::Torrent *> &torrents);
@@ -140,3 +143,5 @@ private:
     QIcon m_stalledUPIcon;
     QIcon m_uploadingIcon;
 };
+
+Q_DECLARE_METATYPE(TransferListModel::Column)

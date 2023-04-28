@@ -2,6 +2,7 @@ add_library(qbt_base STATIC
     # headers
     3rdparty/expected.hpp
     algorithm.h
+    applicationcomponent.h
     asyncfilestorage.h
     bittorrent/abstractfilestorage.h
     bittorrent/addtorrentparams.h
@@ -29,10 +30,11 @@ add_library(qbt_base STATIC
     bittorrent/portforwarderimpl.h
     bittorrent/resumedatastorage.h
     bittorrent/session.h
+    bittorrent/sessionimpl.h
     bittorrent/sessionstatus.h
     bittorrent/speedmonitor.h
-    bittorrent/statistics.h
     bittorrent/torrent.h
+    bittorrent/torrentcontenthandler.h
     bittorrent/torrentcontentlayout.h
     bittorrent/torrentcreatorthread.h
     bittorrent/torrentimpl.h
@@ -100,10 +102,12 @@ add_library(qbt_base STATIC
     utils/password.h
     utils/random.h
     utils/string.h
+    utils/thread.h
     utils/version.h
     version.h
 
     # sources
+    applicationcomponent.cpp
     asyncfilestorage.cpp
     bittorrent/abstractfilestorage.cpp
     bittorrent/bandwidthscheduler.cpp
@@ -122,10 +126,11 @@ add_library(qbt_base STATIC
     bittorrent/peeraddress.cpp
     bittorrent/peerinfo.cpp
     bittorrent/portforwarderimpl.cpp
-    bittorrent/session.cpp
+    bittorrent/resumedatastorage.cpp
+    bittorrent/sessionimpl.cpp
     bittorrent/speedmonitor.cpp
-    bittorrent/statistics.cpp
     bittorrent/torrent.cpp
+    bittorrent/torrentcontenthandler.cpp
     bittorrent/torrentcreatorthread.cpp
     bittorrent/torrentimpl.cpp
     bittorrent/torrentinfo.cpp
@@ -181,6 +186,7 @@ add_library(qbt_base STATIC
     utils/password.cpp
     utils/random.cpp
     utils/string.cpp
+    utils/thread.cpp
 )
 
 target_link_libraries(qbt_base

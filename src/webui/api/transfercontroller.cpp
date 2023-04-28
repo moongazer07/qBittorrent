@@ -34,7 +34,9 @@
 #include "base/bittorrent/peeraddress.h"
 #include "base/bittorrent/peerinfo.h"
 #include "base/bittorrent/session.h"
+#include "base/bittorrent/sessionstatus.h"
 #include "base/global.h"
+#include "base/utils/string.h"
 #include "apierror.h"
 
 const QString KEY_TRANSFER_DLSPEED = u"dl_info_speed"_qs;
@@ -115,6 +117,18 @@ void TransferController::toggleSpeedLimitsModeAction()
 void TransferController::speedLimitsModeAction()
 {
     setResult(QString::number(BitTorrent::Session::instance()->isAltGlobalSpeedLimitEnabled()));
+}
+
+void TransferController::setSpeedLimitsModeAction()
+{
+    requireParams({u"mode"_qs});
+
+    const std::optional<int> mode = Utils::String::parseInt(params().value(u"mode"_qs));
+    if (!mode)
+        throw APIError(APIErrorType::BadParams, tr("'mode': invalid argument"));
+
+    // Any non-zero values are considered as alternative mode
+    BitTorrent::Session::instance()->setAltGlobalSpeedLimitEnabled(mode != 0);
 }
 
 void TransferController::banPeersAction()

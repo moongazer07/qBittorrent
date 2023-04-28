@@ -39,9 +39,8 @@
 #include "base/utils/net.h"
 #include "webapplication.h"
 
-WebUI::WebUI()
-    : m_isErrored(false)
-    , m_port(0)
+WebUI::WebUI(IApplication *app)
+    : ApplicationComponent(app)
 {
     configure();
     connect(Preferences::instance(), &Preferences::changed, this, &WebUI::configure);
@@ -51,39 +50,34 @@ void WebUI::configure()
 {
     m_isErrored = false; // clear previous error state
 
-    Logger *const logger = Logger::instance();
-    Preferences *const pref = Preferences::instance();
-
-    const quint16 oldPort = m_port;
-    m_port = pref->getWebUiPort();
+    const QString portForwardingProfile = u"webui"_qs;
+    const Preferences *pref = Preferences::instance();
+    const quint16 port = pref->getWebUiPort();
 
     if (pref->isWebUiEnabled())
     {
-        // UPnP/NAT-PMP
+        // Port forwarding
+        auto *portForwarder = Net::PortForwarder::instance();
         if (pref->useUPnPForWebUIPort())
         {
-            if (m_port != oldPort)
-            {
-                Net::PortForwarder::instance()->deletePort(oldPort);
-                Net::PortForwarder::instance()->addPort(m_port);
-            }
+            portForwarder->setPorts(portForwardingProfile, {port});
         }
         else
         {
-            Net::PortForwarder::instance()->deletePort(oldPort);
+            portForwarder->removePorts(portForwardingProfile);
         }
 
         // http server
         const QString serverAddressString = pref->getWebUiAddress();
         if (!m_httpServer)
         {
-            m_webapp = new WebApplication(this);
+            m_webapp = new WebApplication(app(), this);
             m_httpServer = new Http::Server(m_webapp, this);
         }
         else
         {
             if ((m_httpServer->serverAddress().toString() != serverAddressString)
-                    || (m_httpServer->serverPort() != m_port))
+                    || (m_httpServer->serverPort() != port))
                 m_httpServer->close();
         }
 
@@ -101,9 +95,9 @@ void WebUI::configure()
 
             const bool success = m_httpServer->setupHttps(cert, key);
             if (success)
-                logger->addMessage(tr("Web UI: HTTPS setup successful"));
+                LogMsg(tr("Web UI: HTTPS setup successful"));
             else
-                logger->addMessage(tr("Web UI: HTTPS setup failed, fallback to HTTP"), Log::CRITICAL);
+                LogMsg(tr("Web UI: HTTPS setup failed, fallback to HTTP"), Log::CRITICAL);
         }
         else
         {
@@ -114,16 +108,16 @@ void WebUI::configure()
         {
             const auto address = ((serverAddressString == u"*") || serverAddressString.isEmpty())
                 ? QHostAddress::Any : QHostAddress(serverAddressString);
-            bool success = m_httpServer->listen(address, m_port);
+            bool success = m_httpServer->listen(address, port);
             if (success)
             {
-                logger->addMessage(tr("Web UI: Now listening on IP: %1, port: %2").arg(serverAddressString).arg(m_port));
+                LogMsg(tr("Web UI: Now listening on IP: %1, port: %2").arg(serverAddressString).arg(port));
             }
             else
             {
                 const QString errorMsg = tr("Web UI: Unable to bind to IP: %1, port: %2. Reason: %3")
-                    .arg(serverAddressString).arg(m_port).arg(m_httpServer->errorString());
-                logger->addMessage(errorMsg, Log::CRITICAL);
+                    .arg(serverAddressString).arg(port).arg(m_httpServer->errorString());
+                LogMsg(errorMsg, Log::CRITICAL);
                 qCritical() << errorMsg;
 
                 m_isErrored = true;
@@ -146,7 +140,7 @@ void WebUI::configure()
     }
     else
     {
-        Net::PortForwarder::instance()->deletePort(oldPort);
+        Net::PortForwarder::instance()->removePorts(portForwardingProfile);
 
         delete m_httpServer;
         delete m_webapp;

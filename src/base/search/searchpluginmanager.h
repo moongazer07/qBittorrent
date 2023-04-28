@@ -36,7 +36,7 @@
 #include "base/path.h"
 #include "base/utils/version.h"
 
-using PluginVersion = Utils::Version<short, 2>;
+using PluginVersion = Utils::Version<2>;
 Q_DECLARE_METATYPE(PluginVersion)
 
 namespace Net
@@ -104,6 +104,7 @@ signals:
     void checkForUpdatesFailed(const QString &reason);
 
 private:
+    void applyProxySettings();
     void update();
     void updateNova();
     void parseVersionInfo(const QByteArray &info);

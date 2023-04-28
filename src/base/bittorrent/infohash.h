@@ -40,6 +40,9 @@
 using SHA1Hash = Digest32<160>;
 using SHA256Hash = Digest32<256>;
 
+Q_DECLARE_METATYPE(SHA1Hash)
+Q_DECLARE_METATYPE(SHA256Hash)
+
 namespace BitTorrent
 {
     class InfoHash;
@@ -52,6 +55,8 @@ namespace BitTorrent
 
         static TorrentID fromString(const QString &hashString);
         static TorrentID fromInfoHash(const InfoHash &infoHash);
+        static TorrentID fromSHA1Hash(const SHA1Hash &hash);
+        static TorrentID fromSHA256Hash(const SHA256Hash &hash);
     };
 
     class InfoHash
@@ -70,6 +75,7 @@ namespace BitTorrent
 #endif
 
         bool isValid() const;
+        bool isHybrid() const;
         SHA1Hash v1() const;
         SHA256Hash v2() const;
         TorrentID toTorrentID() const;

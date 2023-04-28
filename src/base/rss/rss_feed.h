@@ -91,6 +91,7 @@ namespace RSS
         void iconLoaded(Feed *feed = nullptr);
         void titleChanged(Feed *feed = nullptr);
         void stateChanged(Feed *feed = nullptr);
+        void urlChanged(const QString &oldURL);
 
     private slots:
         void handleSessionProcessingEnabledChanged(bool enabled);
@@ -99,7 +100,7 @@ namespace RSS
         void handleDownloadFinished(const Net::DownloadResult &result);
         void handleParsingFinished(const Private::ParsingResult &result);
         void handleArticleRead(Article *article);
-        void handleArticleLoadFinished(const QVector<QVariantHash> &articles);
+        void handleArticleLoadFinished(QVector<QVariantHash> articles);
 
     private:
         void timerEvent(QTimerEvent *event) override;
@@ -107,18 +108,19 @@ namespace RSS
         void load();
         void store();
         void storeDeferred();
-        bool addArticle(Article *article);
+        bool addArticle(const QVariantHash &articleData);
         void removeOldestArticle();
         void increaseUnreadCount();
         void decreaseUnreadCount();
         void downloadIcon();
         int updateArticles(const QList<QVariantHash> &loadedArticles);
+        void setURL(const QString &url);
 
         Session *m_session = nullptr;
         Private::Parser *m_parser = nullptr;
         Private::FeedSerializer *m_serializer = nullptr;
         const QUuid m_uid;
-        const QString m_url;
+        QString m_url;
         QString m_title;
         QString m_lastBuildDate;
         bool m_hasError = false;

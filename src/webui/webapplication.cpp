@@ -32,6 +32,7 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -42,12 +43,10 @@
 #include <QUrl>
 
 #include "base/algorithm.h"
-#include "base/global.h"
 #include "base/http/httperror.h"
 #include "base/logger.h"
 #include "base/preferences.h"
 #include "base/types.h"
-#include "base/utils/bytearray.h"
 #include "base/utils/fs.h"
 #include "base/utils/misc.h"
 #include "base/utils/random.h"
@@ -63,9 +62,8 @@
 #include "api/transfercontroller.h"
 
 const int MAX_ALLOWED_FILESIZE = 10 * 1024 * 1024;
-const auto C_SID = QByteArrayLiteral("SID"); // name of session id cookie
+const QString DEFAULT_SESSION_COOKIE_NAME = u"SID"_qs;
 
-const QString PATH_PREFIX_ICONS = u"/icons/"_qs;
 const QString WWW_FOLDER = u":/www"_qs;
 const QString PUBLIC_FOLDER = u"/public"_qs;
 const QString PRIVATE_FOLDER = u"/private"_qs;
@@ -114,17 +112,57 @@ namespace
 
         return u"no-store"_qs;
     }
+
+    QString createLanguagesOptionsHtml()
+    {
+        // List language files
+        const QDir langDir {u":/www/translations"_qs};
+        const QStringList langFiles = langDir.entryList(QStringList(u"webui_*.qm"_qs), QDir::Files);
+        QStringList languages;
+        for (const QString &langFile : langFiles)
+        {
+            const QString localeStr = langFile.section(u"_"_qs, 1, -1).section(u"."_qs, 0, 0); // remove "webui_" and ".qm"
+            languages << u"<option value=\"%1\">%2</option>"_qs.arg(localeStr, Utils::Misc::languageToLocalizedString(localeStr));
+            qDebug() << "Supported locale:" << localeStr;
+        }
+
+        return languages.join(u'\n');
+    }
+
+    bool isValidCookieName(const QString &cookieName)
+    {
+        if (cookieName.isEmpty() || (cookieName.size() > 128))
+            return false;
+
+        const QRegularExpression invalidNameRegex {u"[^a-zA-Z0-9_\\-]"_qs};
+        if (invalidNameRegex.match(cookieName).hasMatch())
+            return false;
+
+        return true;
+    }
 }
 
-WebApplication::WebApplication(QObject *parent)
+WebApplication::WebApplication(IApplication *app, QObject *parent)
     : QObject(parent)
+    , ApplicationComponent(app)
     , m_cacheID {QString::number(Utils::Random::rand(), 36)}
-    , m_authController {new AuthController(this, this)}
+    , m_authController {new AuthController(this, app, this)}
 {
     declarePublicAPI(u"auth/login"_qs);
 
     configure();
     connect(Preferences::instance(), &Preferences::changed, this, &WebApplication::configure);
+
+    m_sessionCookieName = Preferences::instance()->getWebAPISessionCookieName();
+    if (!isValidCookieName(m_sessionCookieName))
+    {
+        if (!m_sessionCookieName.isEmpty())
+        {
+            LogMsg(tr("Unacceptable session cookie name is specified: '%1'. Default one is used.")
+                   .arg(m_sessionCookieName), Log::WARNING);
+        }
+        m_sessionCookieName = DEFAULT_SESSION_COOKIE_NAME;
+    }
 }
 
 WebApplication::~WebApplication()
@@ -135,18 +173,13 @@ WebApplication::~WebApplication()
 
 void WebApplication::sendWebUIFile()
 {
-    const QStringList pathItems {request().path.split(u'/', Qt::SkipEmptyParts)};
-    if (pathItems.contains(u".") || pathItems.contains(u".."))
-        throw InternalServerErrorHTTPError();
+    if (request().path.contains(u'\\'))
+        throw BadRequestHTTPError();
 
-    if (!m_isAltUIUsed)
+    if (const QList<QStringView> pathItems = QStringView(request().path).split(u'/', Qt::SkipEmptyParts)
+            ; pathItems.contains(u".") || pathItems.contains(u".."))
     {
-        if (request().path.startsWith(PATH_PREFIX_ICONS))
-        {
-            const Path imageFilename {request().path.mid(PATH_PREFIX_ICONS.size())};
-            sendFile(Path(u":/icons"_qs) / imageFilename);
-            return;
-        }
+        throw BadRequestHTTPError();
     }
 
     const QString path = (request().path != u"/")
@@ -164,17 +197,13 @@ void WebApplication::sendWebUIFile()
 
     if (m_isAltUIUsed)
     {
-#ifdef Q_OS_UNIX
         if (!Utils::Fs::isRegularFile(localPath))
-        {
-            status(500, u"Internal Server Error"_qs);
-            print(tr("Unacceptable file type, only regular file is allowed."), Http::CONTENT_TYPE_TXT);
-            return;
-        }
-#endif
+            throw InternalServerErrorHTTPError(tr("Unacceptable file type, only regular file is allowed."));
 
-        QFileInfo fileInfo {localPath.data()};
-        while (Path(fileInfo.filePath()) != m_rootFolder)
+        const QString rootFolder = m_rootFolder.data();
+
+        QFileInfo fileInfo {localPath.parentPath().data()};
+        while (fileInfo.path() != rootFolder)
         {
             if (fileInfo.isSymLink())
                 throw InternalServerErrorHTTPError(tr("Symlinks inside alternative UI folder are forbidden."));
@@ -252,9 +281,11 @@ void WebApplication::doProcessRequest()
     const QString action = match.captured(u"action"_qs);
     const QString scope = match.captured(u"scope"_qs);
 
+    // Check public/private scope
     if (!session() && !isPublicAPI(scope, action))
         throw ForbiddenHTTPError();
 
+    // Find matching API
     APIController *controller = nullptr;
     if (session())
         controller = session()->getAPIController(scope);
@@ -264,6 +295,20 @@ void WebApplication::doProcessRequest()
             controller = m_authController;
         else
             throw NotFoundHTTPError();
+    }
+
+    // Filter HTTP methods
+    const auto allowedMethodIter = m_allowedMethod.find({scope, action});
+    if (allowedMethodIter == m_allowedMethod.end())
+    {
+        // by default allow both GET, POST methods
+        if ((m_request.method != Http::METHOD_GET) && (m_request.method != Http::METHOD_POST))
+            throw MethodNotAllowedHTTPError();
+    }
+    else
+    {
+        if (*allowedMethodIter != m_request.method)
+            throw MethodNotAllowedHTTPError();
     }
 
     DataMap data;
@@ -400,15 +445,29 @@ void WebApplication::configure()
     m_isReverseProxySupportEnabled = pref->isWebUIReverseProxySupportEnabled();
     if (m_isReverseProxySupportEnabled)
     {
-        m_trustedReverseProxyList.clear();
-
         const QStringList proxyList = pref->getWebUITrustedReverseProxiesList().split(u';', Qt::SkipEmptyParts);
 
-        for (const QString &proxy : proxyList)
+        m_trustedReverseProxyList.clear();
+        m_trustedReverseProxyList.reserve(proxyList.size());
+
+        for (QString proxy : proxyList)
         {
-            QHostAddress ip;
-            if (ip.setAddress(proxy))
-                m_trustedReverseProxyList.push_back(ip);
+            if (!proxy.contains(u'/'))
+            {
+                const QAbstractSocket::NetworkLayerProtocol protocol = QHostAddress(proxy).protocol();
+                if (protocol == QAbstractSocket::IPv4Protocol)
+                {
+                    proxy.append(u"/32");
+                }
+                else if (protocol == QAbstractSocket::IPv6Protocol)
+                {
+                    proxy.append(u"/128");
+                }
+            }
+
+            const std::optional<Utils::Net::Subnet> subnet = Utils::Net::parseSubnet(proxy);
+            if (subnet)
+                m_trustedReverseProxyList.push_back(subnet.value());
         }
 
         if (m_trustedReverseProxyList.isEmpty())
@@ -426,12 +485,15 @@ void WebApplication::sendFile(const Path &path)
     const QDateTime lastModified = Utils::Fs::lastModified(path);
 
     // find translated file in cache
-    const auto it = m_translatedFiles.constFind(path);
-    if ((it != m_translatedFiles.constEnd()) && (lastModified <= it->lastModified))
+    if (!m_isAltUIUsed)
     {
-        print(it->data, it->mimeType);
-        setHeader({Http::HEADER_CACHE_CONTROL, getCachingInterval(it->mimeType)});
-        return;
+        if (const auto it = m_translatedFiles.constFind(path);
+            (it != m_translatedFiles.constEnd()) && (lastModified <= it->lastModified))
+        {
+            print(it->data, it->mimeType);
+            setHeader({Http::HEADER_CACHE_CONTROL, getCachingInterval(it->mimeType)});
+            return;
+        }
     }
 
     QFile file {path.data()};
@@ -452,15 +514,19 @@ void WebApplication::sendFile(const Path &path)
     file.close();
 
     const QMimeType mimeType = QMimeDatabase().mimeTypeForFileNameAndData(path.data(), data);
-    const bool isTranslatable = mimeType.inherits(u"text/plain"_qs);
+    const bool isTranslatable = !m_isAltUIUsed && mimeType.inherits(u"text/plain"_qs);
 
-    // Translate the file
     if (isTranslatable)
     {
         auto dataStr = QString::fromUtf8(data);
+        // Translate the file
         translateDocument(dataStr);
-        data = dataStr.toUtf8();
 
+        // Add the language options
+        if (path == (m_rootFolder / Path(PRIVATE_FOLDER) / Path(u"views/preferences.html"_qs)))
+            dataStr.replace(u"${LANGUAGE_OPTIONS}"_qs, createLanguagesOptionsHtml());
+
+        data = dataStr.toUtf8();
         m_translatedFiles[path] = {data, mimeType.name(), lastModified}; // caching translated file
     }
 
@@ -493,7 +559,7 @@ Http::Response WebApplication::processRequest(const Http::Request &request, cons
         // block suspicious requests
         if ((m_isCSRFProtectionEnabled && isCrossSiteRequest(m_request))
             || (m_isHostHeaderValidationEnabled && !validateHostHeader(m_domainList)))
-            {
+        {
             throw UnauthorizedHTTPError();
         }
 
@@ -524,7 +590,7 @@ void WebApplication::sessionInitialize()
 {
     Q_ASSERT(!m_currentSession);
 
-    const QString sessionId {parseCookie(m_request.headers.value(u"cookie"_qs)).value(QString::fromLatin1(C_SID))};
+    const QString sessionId {parseCookie(m_request.headers.value(u"cookie"_qs)).value(m_sessionCookieName)};
 
     // TODO: Additional session check
 
@@ -574,7 +640,7 @@ bool WebApplication::isAuthNeeded()
 {
     if (!m_isLocalAuthEnabled && Utils::Net::isLoopbackAddress(m_clientAddress))
         return false;
-    if (m_isAuthSubnetWhitelistEnabled && Utils::Net::isIPInRange(m_clientAddress, m_authSubnetWhitelist))
+    if (m_isAuthSubnetWhitelistEnabled && Utils::Net::isIPInSubnets(m_clientAddress, m_authSubnetWhitelist))
         return false;
     return true;
 }
@@ -600,7 +666,7 @@ void WebApplication::sessionStart()
         return false;
     });
 
-    m_currentSession = new WebSession(generateSid());
+    m_currentSession = new WebSession(generateSid(), app());
     m_currentSession->registerAPIController<AppController>(u"app"_qs);
     m_currentSession->registerAPIController<LogController>(u"log"_qs);
     m_currentSession->registerAPIController<RSSController>(u"rss"_qs);
@@ -610,13 +676,15 @@ void WebApplication::sessionStart()
     m_currentSession->registerAPIController<TransferController>(u"transfer"_qs);
     m_sessions[m_currentSession->id()] = m_currentSession;
 
-    QNetworkCookie cookie(C_SID, m_currentSession->id().toUtf8());
+    QNetworkCookie cookie {m_sessionCookieName.toLatin1(), m_currentSession->id().toUtf8()};
     cookie.setHttpOnly(true);
     cookie.setSecure(m_isSecureCookieEnabled && m_isHttpsEnabled);
     cookie.setPath(u"/"_qs);
     QByteArray cookieRawForm = cookie.toRawForm();
     if (m_isCSRFProtectionEnabled)
         cookieRawForm.append("; SameSite=Strict");
+    else if (cookie.isSecure())
+        cookieRawForm.append("; SameSite=None");
     setHeader({Http::HEADER_SET_COOKIE, QString::fromLatin1(cookieRawForm)});
 }
 
@@ -624,7 +692,7 @@ void WebApplication::sessionEnd()
 {
     Q_ASSERT(m_currentSession);
 
-    QNetworkCookie cookie(C_SID);
+    QNetworkCookie cookie {m_sessionCookieName.toLatin1()};
     cookie.setPath(u"/"_qs);
     cookie.setExpirationDate(QDateTime::currentDateTime().addDays(-1));
 
@@ -723,7 +791,7 @@ QHostAddress WebApplication::resolveClientAddress() const
         return m_env.clientAddress;
 
     // Only reverse proxy can overwrite client address
-    if (!m_trustedReverseProxyList.contains(m_env.clientAddress))
+    if (!Utils::Net::isIPInSubnets(m_env.clientAddress, m_trustedReverseProxyList))
         return m_env.clientAddress;
 
     const QString forwardedFor = m_request.headers.value(Http::HEADER_X_FORWARDED_FOR);
@@ -753,8 +821,9 @@ QHostAddress WebApplication::resolveClientAddress() const
 
 // WebSession
 
-WebSession::WebSession(const QString &sid)
-    : m_sid {sid}
+WebSession::WebSession(const QString &sid, IApplication *app)
+    : ApplicationComponent(app)
+    , m_sid {sid}
 {
     updateTimestamp();
 }

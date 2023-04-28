@@ -32,10 +32,12 @@
 #include <cmath>
 
 #include <QLocale>
-#include <QRegularExpression>
+#include <QStringList>
 #include <QVector>
 
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#include <QRegularExpression>
+#else
 #include <QRegExp>
 #endif
 
@@ -55,11 +57,7 @@ QString Utils::String::fromDouble(const double n, const int precision)
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
 QString Utils::String::wildcardToRegexPattern(const QString &pattern)
 {
-    // replace [ and ] with [[] and []], respectively
-    QString escapedPattern = pattern;
-    escapedPattern.replace(QRegularExpression(u"\\[|\\]"_qs), u"[\\0]"_qs);
-
-    return QRegularExpression::wildcardToRegularExpression(escapedPattern, QRegularExpression::UnanchoredWildcardConversion);
+    return QRegularExpression::wildcardToRegularExpression(pattern, QRegularExpression::UnanchoredWildcardConversion);
 }
 #else
 // This is marked as internal in QRegExp.cpp, but is exported. The alternative would be to
@@ -68,13 +66,45 @@ QString qt_regexp_toCanonical(const QString &pattern, QRegExp::PatternSyntax pat
 
 QString Utils::String::wildcardToRegexPattern(const QString &pattern)
 {
-    // replace [ and ] with [[] and []], respectively
-    QString escapedPattern = pattern;
-    escapedPattern.replace(QRegularExpression(u"\\[|\\]"_qs), u"[\\0]"_qs);
-
-    return qt_regexp_toCanonical(escapedPattern, QRegExp::Wildcard);
+    return qt_regexp_toCanonical(pattern, QRegExp::Wildcard);
 }
 #endif
+
+QStringList Utils::String::splitCommand(const QString &command)
+{
+    QStringList ret;
+    ret.reserve(32);
+
+    bool inQuotes = false;
+    QString tmp;
+    for (const QChar c : command)
+    {
+        if (c == u' ')
+        {
+            if (!inQuotes)
+            {
+                if (!tmp.isEmpty())
+                {
+                    ret.append(tmp);
+                    tmp.clear();
+                }
+
+                continue;
+            }
+        }
+        else if (c == u'"')
+        {
+            inQuotes = !inQuotes;
+        }
+
+        tmp.append(c);
+    }
+
+    if (!tmp.isEmpty())
+        ret.append(tmp);
+
+    return ret;
+}
 
 std::optional<bool> Utils::String::parseBool(const QString &string)
 {

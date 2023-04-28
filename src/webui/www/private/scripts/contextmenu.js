@@ -362,6 +362,19 @@ window.qBittorrent.ContextMenu = (function() {
 
             let show_seq_dl = true;
 
+            // hide renameFiles when more than 1 torrent is selected
+            if (h.length == 1) {
+                const data = torrentsTable.rows.get(h[0]).full_data;
+                let metadata_downloaded = !(data['state'] == 'metaDL' || data['state'] == 'forcedMetaDL' || data['total_size'] == -1);
+
+                // hide renameFiles when metadata hasn't been downloaded yet
+                metadata_downloaded
+                    ? this.showItem('renameFiles')
+                    : this.hideItem('renameFiles');
+            }
+            else
+                this.hideItem('renameFiles');
+
             if (!all_are_seq_dl && there_are_seq_dl)
                 show_seq_dl = false;
 
@@ -433,10 +446,10 @@ window.qBittorrent.ContextMenu = (function() {
             const categoryList = $('contextCategoryList');
             categoryList.empty();
             categoryList.appendChild(new Element('li', {
-                html: '<a href="javascript:torrentNewCategoryFN();"><img src="icons/list-add.svg" alt="QBT_TR(New...)QBT_TR[CONTEXT=TransferListWidget]"/> QBT_TR(New...)QBT_TR[CONTEXT=TransferListWidget]</a>'
+                html: '<a href="javascript:torrentNewCategoryFN();"><img src="images/list-add.svg" alt="QBT_TR(New...)QBT_TR[CONTEXT=TransferListWidget]"/> QBT_TR(New...)QBT_TR[CONTEXT=TransferListWidget]</a>'
             }));
             categoryList.appendChild(new Element('li', {
-                html: '<a href="javascript:torrentSetCategoryFN(0);"><img src="icons/edit-clear.svg" alt="QBT_TR(Reset)QBT_TR[CONTEXT=TransferListWidget]"/> QBT_TR(Reset)QBT_TR[CONTEXT=TransferListWidget]</a>'
+                html: '<a href="javascript:torrentSetCategoryFN(0);"><img src="images/edit-clear.svg" alt="QBT_TR(Reset)QBT_TR[CONTEXT=TransferListWidget]"/> QBT_TR(Reset)QBT_TR[CONTEXT=TransferListWidget]</a>'
             }));
 
             const sortedCategories = [];
@@ -449,7 +462,7 @@ window.qBittorrent.ContextMenu = (function() {
             Object.each(sortedCategories, function(categoryName) {
                 const categoryHash = genHash(categoryName);
                 const el = new Element('li', {
-                    html: '<a href="javascript:torrentSetCategoryFN(\'' + categoryHash + '\');"><img src="icons/inode-directory.svg"/> ' + window.qBittorrent.Misc.escapeHtml(categoryName) + '</a>'
+                    html: '<a href="javascript:torrentSetCategoryFN(\'' + categoryHash + '\');"><img src="images/view-categories.svg"/> ' + window.qBittorrent.Misc.escapeHtml(categoryName) + '</a>'
                 });
                 if (first) {
                     el.addClass('separator');
@@ -466,13 +479,13 @@ window.qBittorrent.ContextMenu = (function() {
 
             contextTagList.appendChild(new Element('li', {
                 html: '<a href="javascript:torrentAddTagsFN();">'
-                    + '<img src="icons/list-add.svg" alt="QBT_TR(Add...)QBT_TR[CONTEXT=TransferListWidget]"/>'
+                    + '<img src="images/list-add.svg" alt="QBT_TR(Add...)QBT_TR[CONTEXT=TransferListWidget]"/>'
                     + ' QBT_TR(Add...)QBT_TR[CONTEXT=TransferListWidget]'
                     + '</a>'
             }));
             contextTagList.appendChild(new Element('li', {
                 html: '<a href="javascript:torrentRemoveAllTagsFN();">'
-                    + '<img src="icons/edit-clear.svg" alt="QBT_TR(Remove All)QBT_TR[CONTEXT=TransferListWidget]"/>'
+                    + '<img src="images/edit-clear.svg" alt="QBT_TR(Remove All)QBT_TR[CONTEXT=TransferListWidget]"/>'
                     + ' QBT_TR(Remove All)QBT_TR[CONTEXT=TransferListWidget]'
                     + '</a>'
             }));
@@ -504,10 +517,17 @@ window.qBittorrent.ContextMenu = (function() {
             if ((id != CATEGORIES_ALL) && (id != CATEGORIES_UNCATEGORIZED)) {
                 this.showItem('editCategory');
                 this.showItem('deleteCategory');
+                if (useSubcategories) {
+                    this.showItem('createSubcategory');
+                }
+                else {
+                    this.hideItem('createSubcategory');
+                }
             }
             else {
                 this.hideItem('editCategory');
                 this.hideItem('deleteCategory');
+                this.hideItem('createSubcategory');
             }
         }
     });

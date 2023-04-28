@@ -63,7 +63,7 @@
 
 using namespace std::chrono_literals;
 
-const std::chrono::duration WATCH_INTERVAL = 10s;
+const std::chrono::seconds WATCH_INTERVAL {10};
 const int MAX_FAILED_RETRIES = 5;
 const QString CONF_FILE_NAME = u"watched_folders.json"_qs;
 
@@ -76,6 +76,7 @@ const QString PARAM_SAVEPATH = u"save_path"_qs;
 const QString PARAM_USEDOWNLOADPATH = u"use_download_path"_qs;
 const QString PARAM_DOWNLOADPATH = u"download_path"_qs;
 const QString PARAM_OPERATINGMODE = u"operating_mode"_qs;
+const QString PARAM_QUEUETOP = u"add_to_top_of_queue"_qs;
 const QString PARAM_STOPPED = u"stopped"_qs;
 const QString PARAM_SKIPCHECKING = u"skip_checking"_qs;
 const QString PARAM_CONTENTLAYOUT = u"content_layout"_qs;
@@ -140,6 +141,7 @@ namespace
         params.useDownloadPath = getOptionalBool(jsonObj, PARAM_USEDOWNLOADPATH);
         params.downloadPath = Path(jsonObj.value(PARAM_DOWNLOADPATH).toString());
         params.addForced = (getEnum<BitTorrent::TorrentOperatingMode>(jsonObj, PARAM_OPERATINGMODE) == BitTorrent::TorrentOperatingMode::Forced);
+        params.addToQueueTop = getOptionalBool(jsonObj, PARAM_QUEUETOP);
         params.addPaused = getOptionalBool(jsonObj, PARAM_STOPPED);
         params.skipChecking = jsonObj.value(PARAM_SKIPCHECKING).toBool();
         params.contentLayout = getOptionalEnum<BitTorrent::TorrentContentLayout>(jsonObj, PARAM_CONTENTLAYOUT);
@@ -168,6 +170,8 @@ namespace
             {PARAM_RATIOLIMIT, params.ratioLimit}
         };
 
+        if (params.addToQueueTop)
+            jsonObj[PARAM_QUEUETOP] = *params.addToQueueTop;
         if (params.addPaused)
             jsonObj[PARAM_STOPPED] = *params.addPaused;
         if (params.contentLayout)
@@ -254,23 +258,37 @@ TorrentFilesWatcher *TorrentFilesWatcher::instance()
 
 TorrentFilesWatcher::TorrentFilesWatcher(QObject *parent)
     : QObject {parent}
-    , m_ioThread {new QThread(this)}
-    , m_asyncWorker {new TorrentFilesWatcher::Worker}
+    , m_ioThread {new QThread}
 {
-    connect(m_asyncWorker, &TorrentFilesWatcher::Worker::magnetFound, this, &TorrentFilesWatcher::onMagnetFound);
-    connect(m_asyncWorker, &TorrentFilesWatcher::Worker::torrentFound, this, &TorrentFilesWatcher::onTorrentFound);
-
-    m_asyncWorker->moveToThread(m_ioThread);
-    m_ioThread->start();
+    const auto *btSession = BitTorrent::Session::instance();
+    if (btSession->isRestored())
+        initWorker();
+    else
+        connect(btSession, &BitTorrent::Session::restored, this, &TorrentFilesWatcher::initWorker);
 
     load();
 }
 
-TorrentFilesWatcher::~TorrentFilesWatcher()
+void TorrentFilesWatcher::initWorker()
 {
-    m_ioThread->quit();
-    m_ioThread->wait();
-    delete m_asyncWorker;
+    Q_ASSERT(!m_asyncWorker);
+
+    m_asyncWorker = new TorrentFilesWatcher::Worker;
+
+    connect(m_asyncWorker, &TorrentFilesWatcher::Worker::magnetFound, this, &TorrentFilesWatcher::onMagnetFound);
+    connect(m_asyncWorker, &TorrentFilesWatcher::Worker::torrentFound, this, &TorrentFilesWatcher::onTorrentFound);
+
+    m_asyncWorker->moveToThread(m_ioThread.get());
+    connect(m_ioThread.get(), &QThread::finished, m_asyncWorker, &QObject::deleteLater);
+    m_ioThread->start();
+
+    for (auto it = m_watchedFolders.cbegin(); it != m_watchedFolders.cend(); ++it)
+    {
+        QMetaObject::invokeMethod(m_asyncWorker, [this, path = it.key(), options = it.value()]()
+        {
+            m_asyncWorker->setWatchedFolder(path, options);
+        });
+    }
 }
 
 void TorrentFilesWatcher::load()
@@ -399,10 +417,13 @@ void TorrentFilesWatcher::doSetWatchedFolder(const Path &path, const WatchedFold
 
     m_watchedFolders[path] = options;
 
-    QMetaObject::invokeMethod(m_asyncWorker, [this, path, options]()
+    if (m_asyncWorker)
     {
-        m_asyncWorker->setWatchedFolder(path, options);
-    });
+        QMetaObject::invokeMethod(m_asyncWorker, [this, path, options]()
+        {
+            m_asyncWorker->setWatchedFolder(path, options);
+        });
+    }
 
     emit watchedFolderSet(path, options);
 }
@@ -411,10 +432,13 @@ void TorrentFilesWatcher::removeWatchedFolder(const Path &path)
 {
     if (m_watchedFolders.remove(path))
     {
-        QMetaObject::invokeMethod(m_asyncWorker, [this, path]()
+        if (m_asyncWorker)
         {
-            m_asyncWorker->removeWatchedFolder(path);
-        });
+            QMetaObject::invokeMethod(m_asyncWorker, [this, path]()
+            {
+                m_asyncWorker->removeWatchedFolder(path);
+            });
+        }
 
         emit watchedFolderRemoved(path);
 
@@ -478,7 +502,7 @@ void TorrentFilesWatcher::Worker::removeWatchedFolder(const Path &path)
 
 void TorrentFilesWatcher::Worker::scheduleWatchedFolderProcessing(const Path &path)
 {
-    QTimer::singleShot(2000, this, [this, path]()
+    QTimer::singleShot(2s, Qt::CoarseTimer, this, [this, path]
     {
         processWatchedFolder(path);
     });

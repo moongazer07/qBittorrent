@@ -30,6 +30,8 @@
 
 #include "rss_session.h"
 
+#include <chrono>
+
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -48,7 +50,6 @@
 #include "rss_folder.h"
 #include "rss_item.h"
 
-const int MsecsPerMin = 60000;
 const QString CONF_FOLDER_NAME = u"rss"_qs;
 const QString DATA_FOLDER_NAME = u"rss/articles"_qs;
 const QString FEEDS_FILE_NAME = u"feeds.json"_qs;
@@ -61,14 +62,14 @@ Session::Session()
     : m_storeProcessingEnabled(u"RSS/Session/EnableProcessing"_qs)
     , m_storeRefreshInterval(u"RSS/Session/RefreshInterval"_qs, 30)
     , m_storeMaxArticlesPerFeed(u"RSS/Session/MaxArticlesPerFeed"_qs, 50)
-    , m_workingThread(new QThread(this))
+    , m_workingThread(new QThread)
 {
     Q_ASSERT(!m_instance); // only one instance is allowed
     m_instance = this;
 
     m_confFileStorage = new AsyncFileStorage(specialFolderLocation(SpecialFolder::Config) / Path(CONF_FOLDER_NAME));
-    m_confFileStorage->moveToThread(m_workingThread);
-    connect(m_workingThread, &QThread::finished, m_confFileStorage, &AsyncFileStorage::deleteLater);
+    m_confFileStorage->moveToThread(m_workingThread.get());
+    connect(m_workingThread.get(), &QThread::finished, m_confFileStorage, &AsyncFileStorage::deleteLater);
     connect(m_confFileStorage, &AsyncFileStorage::failed, [](const Path &fileName, const QString &errorString)
     {
         LogMsg(tr("Couldn't save RSS session configuration. File: \"%1\". Error: \"%2\"")
@@ -76,8 +77,8 @@ Session::Session()
     });
 
     m_dataFileStorage = new AsyncFileStorage(specialFolderLocation(SpecialFolder::Data) / Path(DATA_FOLDER_NAME));
-    m_dataFileStorage->moveToThread(m_workingThread);
-    connect(m_workingThread, &QThread::finished, m_dataFileStorage, &AsyncFileStorage::deleteLater);
+    m_dataFileStorage->moveToThread(m_workingThread.get());
+    connect(m_workingThread.get(), &QThread::finished, m_dataFileStorage, &AsyncFileStorage::deleteLater);
     connect(m_dataFileStorage, &AsyncFileStorage::failed, [](const Path &fileName, const QString &errorString)
     {
         LogMsg(tr("Couldn't save RSS session data. File: \"%1\". Error: \"%2\"")
@@ -92,7 +93,7 @@ Session::Session()
     connect(&m_refreshTimer, &QTimer::timeout, this, &Session::refresh);
     if (isProcessingEnabled())
     {
-        m_refreshTimer.start(refreshInterval() * MsecsPerMin);
+        m_refreshTimer.start(std::chrono::minutes(refreshInterval()));
         refresh();
     }
 
@@ -125,11 +126,6 @@ Session::~Session()
     //store();
     delete m_itemsByPath[u""_qs]; // deleting root folder
 
-    // some items may add I/O operation at destruction
-    // stop working thread after deleting root folder
-    m_workingThread->quit();
-    m_workingThread->wait();
-
     qDebug() << "RSS Session deleted.";
 }
 
@@ -160,10 +156,39 @@ nonstd::expected<void, QString> Session::addFeed(const QString &url, const QStri
         return result.get_unexpected();
 
     const auto destFolder = result.value();
-    addItem(new Feed(generateUID(), url, path, this), destFolder);
+    auto *feed = new Feed(generateUID(), url, path, this);
+    addItem(feed, destFolder);
     store();
     if (isProcessingEnabled())
-        feedByURL(url)->refresh();
+        feed->refresh();
+
+    return {};
+}
+
+nonstd::expected<void, QString> Session::setFeedURL(const QString &path, const QString &url)
+{
+    auto *feed = qobject_cast<Feed *>(m_itemsByPath.value(path));
+    if (!feed)
+        return nonstd::make_unexpected(tr("Feed doesn't exist: %1.").arg(path));
+
+    return setFeedURL(feed, url);
+}
+
+nonstd::expected<void, QString> Session::setFeedURL(Feed *feed, const QString &url)
+{
+    Q_ASSERT(feed);
+
+    if (url == feed->url())
+        return {};
+
+    if (m_feedsByURL.contains(url))
+        return nonstd::make_unexpected(tr("RSS feed with given URL already exists: %1.").arg(url));
+
+    m_feedsByURL[url] = m_feedsByURL.take(feed->url());
+    feed->setURL(url);
+    store();
+    if (isProcessingEnabled())
+        feed->refresh();
 
     return {};
 }
@@ -189,8 +214,11 @@ nonstd::expected<void, QString> Session::moveItem(Item *item, const QString &des
     if (!result)
         return result.get_unexpected();
 
-    auto srcFolder = static_cast<Folder *>(m_itemsByPath.value(Item::parentPath(item->path())));
     const auto destFolder = result.value();
+    if (static_cast<Item *>(destFolder) == item)
+        return nonstd::make_unexpected(tr("Couldn't move folder into itself."));
+
+    auto srcFolder = static_cast<Folder *>(m_itemsByPath.value(Item::parentPath(item->path())));
     if (srcFolder != destFolder)
     {
         srcFolder->removeItem(item);
@@ -410,6 +438,16 @@ void Session::addItem(Item *item, Folder *destFolder)
         connect(feed, &Feed::titleChanged, this, &Session::handleFeedTitleChanged);
         connect(feed, &Feed::iconLoaded, this, &Session::feedIconLoaded);
         connect(feed, &Feed::stateChanged, this, &Session::feedStateChanged);
+        connect(feed, &Feed::urlChanged, this, [this, feed](const QString &oldURL)
+        {
+            if (feed->name() == oldURL)
+            {
+                // If feed still use an URL as a name trying to rename it to match new URL...
+                moveItem(feed, Item::joinPath(Item::parentPath(feed->path()), feed->url()));
+            }
+
+            emit feedURLChanged(feed, oldURL);
+        });
         m_feedsByUID[feed->uid()] = feed;
         m_feedsByURL[feed->url()] = feed;
     }
@@ -433,7 +471,7 @@ void Session::setProcessingEnabled(const bool enabled)
         m_storeProcessingEnabled = enabled;
         if (enabled)
         {
-            m_refreshTimer.start(refreshInterval() * MsecsPerMin);
+            m_refreshTimer.start(std::chrono::minutes(refreshInterval()));
             refresh();
         }
         else
@@ -480,13 +518,13 @@ void Session::setRefreshInterval(const int refreshInterval)
     if (m_storeRefreshInterval != refreshInterval)
     {
         m_storeRefreshInterval = refreshInterval;
-        m_refreshTimer.start(m_storeRefreshInterval * MsecsPerMin);
+        m_refreshTimer.start(std::chrono::minutes(m_storeRefreshInterval));
     }
 }
 
 QThread *Session::workingThread() const
 {
-    return m_workingThread;
+    return m_workingThread.get();
 }
 
 void Session::handleItemAboutToBeDestroyed(Item *item)
@@ -503,9 +541,11 @@ void Session::handleItemAboutToBeDestroyed(Item *item)
 void Session::handleFeedTitleChanged(Feed *feed)
 {
     if (feed->name() == feed->url())
+    {
         // Now we have something better than a URL.
         // Trying to rename feed...
         moveItem(feed, Item::joinPath(Item::parentPath(feed->path()), feed->title()));
+    }
 }
 
 QUuid Session::generateUID() const

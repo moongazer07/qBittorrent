@@ -45,6 +45,7 @@
 
 #include "base/global.h"
 #include "base/net/downloadmanager.h"
+#include "base/preferences.h"
 #include "base/utils/version.h"
 #include "base/version.h"
 
@@ -52,25 +53,21 @@ namespace
 {
     bool isVersionMoreRecent(const QString &remoteVersion)
     {
-        using Version = Utils::Version<int, 4, 3>;
+        using Version = Utils::Version<4, 3>;
 
-        try
-        {
-            const Version newVersion {remoteVersion};
-            const Version currentVersion {QBT_VERSION_MAJOR, QBT_VERSION_MINOR, QBT_VERSION_BUGFIX, QBT_VERSION_BUILD};
-            if (newVersion == currentVersion)
-            {
-                const bool isDevVersion = QStringLiteral(QBT_VERSION_STATUS).contains(
-                    QRegularExpression(u"(alpha|beta|rc)"_qs));
-                if (isDevVersion)
-                    return true;
-            }
-            return (newVersion > currentVersion);
-        }
-        catch (const RuntimeError &)
-        {
+        const auto newVersion = Version::fromString(remoteVersion);
+        if (!newVersion.isValid())
             return false;
+
+        const Version currentVersion {QBT_VERSION_MAJOR, QBT_VERSION_MINOR, QBT_VERSION_BUGFIX, QBT_VERSION_BUILD};
+        if (newVersion == currentVersion)
+        {
+            const bool isDevVersion = QStringLiteral(QBT_VERSION_STATUS).contains(
+                QRegularExpression(u"(alpha|beta|rc)"_qs));
+            if (isDevVersion)
+                return true;
         }
+        return (newVersion > currentVersion);
     }
 }
 
@@ -80,8 +77,8 @@ void ProgramUpdater::checkForUpdates() const
     // Don't change this User-Agent. In case our updater goes haywire,
     // the filehost can identify it and contact us.
     Net::DownloadManager::instance()->download(
-        Net::DownloadRequest(RSS_URL).userAgent(QStringLiteral("qBittorrent/" QBT_VERSION_2 " ProgramUpdater (www.qbittorrent.org)"))
-        , this, &ProgramUpdater::rssDownloadFinished);
+            Net::DownloadRequest(RSS_URL).userAgent(QStringLiteral("qBittorrent/" QBT_VERSION_2 " ProgramUpdater (www.qbittorrent.org)"))
+            , Preferences::instance()->useProxyForGeneralPurposes(), this, &ProgramUpdater::rssDownloadFinished);
 }
 
 QString ProgramUpdater::getNewVersion() const

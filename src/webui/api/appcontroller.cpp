@@ -31,6 +31,7 @@
 #include "appcontroller.h"
 
 #include <algorithm>
+#include <chrono>
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -62,6 +63,8 @@
 #include "base/version.h"
 #include "../webapplication.h"
 
+using namespace std::chrono_literals;
+
 void AppController::webapiVersionAction()
 {
     setResult(API_VERSION.toString());
@@ -88,12 +91,13 @@ void AppController::buildInfoAction()
 
 void AppController::shutdownAction()
 {
-    qDebug() << "Shutdown request from Web UI";
-
-    // Special case handling for shutdown, we
+    // Special handling for shutdown, we
     // need to reply to the Web UI before
     // actually shutting down.
-    QTimer::singleShot(100, qApp, &QCoreApplication::quit);
+    QTimer::singleShot(100ms, Qt::CoarseTimer, qApp, []
+    {
+        QCoreApplication::exit();
+    });
 }
 
 void AppController::preferencesAction()
@@ -103,10 +107,25 @@ void AppController::preferencesAction()
 
     QJsonObject data;
 
+    // Behavior
+    // Language
+    data[u"locale"_qs] = pref->getLocale();
+    data[u"performance_warning"_qs] = session->isPerformanceWarningEnabled();
+    // Log file
+    data[u"file_log_enabled"_qs] = app()->isFileLoggerEnabled();
+    data[u"file_log_path"_qs] = app()->fileLoggerPath().toString();
+    data[u"file_log_backup_enabled"_qs] = app()->isFileLoggerBackup();
+    data[u"file_log_max_size"_qs] = app()->fileLoggerMaxSize() / 1024;
+    data[u"file_log_delete_old"_qs] = app()->isFileLoggerDeleteOld();
+    data[u"file_log_age"_qs] = app()->fileLoggerAge();
+    data[u"file_log_age_type"_qs] = app()->fileLoggerAgeType();
+
     // Downloads
     // When adding a torrent
     data[u"torrent_content_layout"_qs] = Utils::String::fromEnum(session->torrentContentLayout());
+    data[u"add_to_top_of_queue"_qs] = session->isAddTorrentToQueueTop();
     data[u"start_paused_enabled"_qs] = session->isAddTorrentPaused();
+    data[u"torrent_stop_condition"_qs] = Utils::String::fromEnum(session->torrentStopCondition());
     data[u"auto_delete_mode"_qs] = static_cast<int>(TorrentFileGuard::autoDeleteMode());
     data[u"preallocate_all"_qs] = session->isPreallocationEnabled();
     data[u"incomplete_files_ext"_qs] = session->isAppendExtensionEnabled();
@@ -115,6 +134,7 @@ void AppController::preferencesAction()
     data[u"torrent_changed_tmm_enabled"_qs] = !session->isDisableAutoTMMWhenCategoryChanged();
     data[u"save_path_changed_tmm_enabled"_qs] = !session->isDisableAutoTMMWhenDefaultSavePathChanged();
     data[u"category_changed_tmm_enabled"_qs] = !session->isDisableAutoTMMWhenCategorySavePathChanged();
+    data[u"use_subcategories"] = session->isSubcategoriesEnabled();
     data[u"save_path"_qs] = session->savePath().toString();
     data[u"temp_path_enabled"_qs] = session->isDownloadPathEnabled();
     data[u"temp_path"_qs] = session->downloadPath().toString();
@@ -154,9 +174,12 @@ void AppController::preferencesAction()
     data[u"mail_notification_auth_enabled"_qs] = pref->getMailNotificationSMTPAuth();
     data[u"mail_notification_username"_qs] = pref->getMailNotificationSMTPUsername();
     data[u"mail_notification_password"_qs] = pref->getMailNotificationSMTPPassword();
-    // Run an external program on torrent completion
-    data[u"autorun_enabled"_qs] = pref->isAutoRunEnabled();
-    data[u"autorun_program"_qs] = pref->getAutoRunProgram();
+    // Run an external program on torrent added
+    data[u"autorun_on_torrent_added_enabled"_qs] = pref->isAutoRunOnTorrentAddedEnabled();
+    data[u"autorun_on_torrent_added_program"_qs] = pref->getAutoRunOnTorrentAddedProgram();
+    // Run an external program on torrent finished
+    data[u"autorun_enabled"_qs] = pref->isAutoRunOnTorrentFinishedEnabled();
+    data[u"autorun_program"_qs] = pref->getAutoRunOnTorrentFinishedProgram();
 
     // Connection
     // Listening Port
@@ -172,15 +195,18 @@ void AppController::preferencesAction()
     // Proxy Server
     const auto *proxyManager = Net::ProxyConfigurationManager::instance();
     Net::ProxyConfiguration proxyConf = proxyManager->proxyConfiguration();
-    data[u"proxy_type"_qs] = static_cast<int>(proxyConf.type);
+    data[u"proxy_type"_qs] = Utils::String::fromEnum(proxyConf.type);
     data[u"proxy_ip"_qs] = proxyConf.ip;
     data[u"proxy_port"_qs] = proxyConf.port;
-    data[u"proxy_auth_enabled"_qs] = proxyManager->isAuthenticationRequired(); // deprecated
+    data[u"proxy_auth_enabled"_qs] = proxyConf.authEnabled;
     data[u"proxy_username"_qs] = proxyConf.username;
     data[u"proxy_password"_qs] = proxyConf.password;
+    data[u"proxy_hostname_lookup"_qs] = proxyConf.hostnameLookupEnabled;
 
+    data[u"proxy_bittorrent"_qs] = pref->useProxyForBT();
     data[u"proxy_peer_connections"_qs] = session->isProxyPeerConnectionsEnabled();
-    data[u"proxy_torrents_only"_qs] = proxyManager->isProxyOnlyForTorrents();
+    data[u"proxy_rss"_qs] = pref->useProxyForRSS();
+    data[u"proxy_misc"_qs] = pref->useProxyForGeneralPurposes();
 
     // IP Filtering
     data[u"ip_filter_enabled"_qs] = session->isIPFilteringEnabled();
@@ -237,9 +263,6 @@ void AppController::preferencesAction()
     data[u"add_trackers"_qs] = session->additionalTrackers();
 
     // Web UI
-    // Language
-    data[u"locale"_qs] = pref->getLocale();
-    data[u"performance_warning"_qs] = session->isPerformanceWarningEnabled();
     // HTTP Server
     data[u"web_ui_domain_list"_qs] = pref->getServerDomains();
     data[u"web_ui_address"_qs] = pref->getWebUiAddress();
@@ -290,8 +313,10 @@ void AppController::preferencesAction()
 
     // Advanced settings
     // qBitorrent preferences
+    // Resume data storage type
+    data[u"resume_data_storage_type"_qs] = Utils::String::fromEnum(session->resumeDataStorageType());
     // Physical memory (RAM) usage limit
-    data[u"memory_working_set_limit"_qs] = dynamic_cast<IApplication *>(QCoreApplication::instance())->memoryWorkingSetLimit();
+    data[u"memory_working_set_limit"_qs] = app()->memoryWorkingSetLimit();
     // Current network interface
     data[u"current_network_interface"_qs] = session->networkInterface();
     // Current network interface address
@@ -300,6 +325,8 @@ void AppController::preferencesAction()
     data[u"save_resume_data_interval"_qs] = session->saveResumeDataInterval();
     // Recheck completed torrents
     data[u"recheck_completed_torrents"_qs] = pref->recheckTorrentsOnCompletion();
+    // Refresh interval
+    data[u"refresh_interval"_qs] = session->refreshInterval();
     // Resolve peer countries
     data[u"resolve_peer_countries"_qs] = pref->resolvePeerCountries();
     // Reannounce to all trackers when ip/port changed
@@ -321,8 +348,10 @@ void AppController::preferencesAction()
     data[u"disk_queue_size"_qs] = session->diskQueueSize();
     // Disk IO Type
     data[u"disk_io_type"_qs] = static_cast<int>(session->diskIOType());
-    // Enable OS cache
-    data[u"enable_os_cache"_qs] = session->useOSCache();
+    // Disk IO read mode
+    data[u"disk_io_read_mode"_qs] = static_cast<int>(session->diskIOReadMode());
+    // Disk IO write mode
+    data[u"disk_io_write_mode"_qs] = static_cast<int>(session->diskIOWriteMode());
     // Coalesce reads & writes
     data[u"enable_coalesce_read_write"_qs] = session->isCoalesceReadWriteEnabled();
     // Piece Extent Affinity
@@ -335,6 +364,10 @@ void AppController::preferencesAction()
     data[u"send_buffer_watermark_factor"_qs] = session->sendBufferWatermarkFactor();
     // Outgoing connections per second
     data[u"connection_speed"_qs] = session->connectionSpeed();
+    // Socket send buffer size
+    data[u"socket_send_buffer_size"_qs] = session->socketSendBufferSize();
+    // Socket receive buffer size
+    data[u"socket_receive_buffer_size"_qs] = session->socketReceiveBufferSize();
     // Socket listen backlog size
     data[u"socket_backlog_size"_qs] = session->socketBacklogSize();
     // Outgoing ports
@@ -359,6 +392,7 @@ void AppController::preferencesAction()
     // Embedded tracker
     data[u"enable_embedded_tracker"_qs] = session->isTrackerEnabled();
     data[u"embedded_tracker_port"_qs] = pref->getTrackerPort();
+    data[u"embedded_tracker_port_forwarding"_qs] = pref->isTrackerPortForwardingEnabled();
     // Choking algorithm
     data[u"upload_slots_behavior"_qs] = static_cast<int>(session->chokingAlgorithm());
     // Seed choking algorithm
@@ -394,12 +428,55 @@ void AppController::setPreferencesAction()
         return (it != m.constEnd());
     };
 
+    // Behavior
+    // Language
+    if (hasKey(u"locale"_qs))
+    {
+        QString locale = it.value().toString();
+        if (pref->getLocale() != locale)
+        {
+            auto *translator = new QTranslator;
+            if (translator->load(u":/lang/qbittorrent_"_qs + locale))
+            {
+                qDebug("%s locale recognized, using translation.", qUtf8Printable(locale));
+            }
+            else
+            {
+                qDebug("%s locale unrecognized, using default (en).", qUtf8Printable(locale));
+            }
+            qApp->installTranslator(translator);
+
+            pref->setLocale(locale);
+        }
+    }
+    if (hasKey(u"performance_warning"_qs))
+        session->setPerformanceWarningEnabled(it.value().toBool());
+    // Log file
+    if (hasKey(u"file_log_enabled"_qs))
+        app()->setFileLoggerEnabled(it.value().toBool());
+    if (hasKey(u"file_log_path"_qs))
+        app()->setFileLoggerPath(Path(it.value().toString()));
+    if (hasKey(u"file_log_backup_enabled"_qs))
+        app()->setFileLoggerBackup(it.value().toBool());
+    if (hasKey(u"file_log_max_size"_qs))
+        app()->setFileLoggerMaxSize(it.value().toInt() * 1024);
+    if (hasKey(u"file_log_delete_old"_qs))
+        app()->setFileLoggerDeleteOld(it.value().toBool());
+    if (hasKey(u"file_log_age"_qs))
+        app()->setFileLoggerAge(it.value().toInt());
+    if (hasKey(u"file_log_age_type"_qs))
+        app()->setFileLoggerAgeType(it.value().toInt());
+
     // Downloads
     // When adding a torrent
     if (hasKey(u"torrent_content_layout"_qs))
         session->setTorrentContentLayout(Utils::String::toEnum(it.value().toString(), BitTorrent::TorrentContentLayout::Original));
+    if (hasKey(u"add_to_top_of_queue"_qs))
+        session->setAddTorrentToQueueTop(it.value().toBool());
     if (hasKey(u"start_paused_enabled"_qs))
         session->setAddTorrentPaused(it.value().toBool());
+    if (hasKey(u"torrent_stop_condition"_qs))
+        session->setTorrentStopCondition(Utils::String::toEnum(it.value().toString(), BitTorrent::Torrent::StopCondition::None));
     if (hasKey(u"auto_delete_mode"_qs))
         TorrentFileGuard::setAutoDeleteMode(static_cast<TorrentFileGuard::AutoDeleteMode>(it.value().toInt()));
 
@@ -417,6 +494,8 @@ void AppController::setPreferencesAction()
         session->setDisableAutoTMMWhenDefaultSavePathChanged(!it.value().toBool());
     if (hasKey(u"category_changed_tmm_enabled"_qs))
         session->setDisableAutoTMMWhenCategorySavePathChanged(!it.value().toBool());
+    if (hasKey(u"use_subcategories"_qs))
+        session->setSubcategoriesEnabled(it.value().toBool());
     if (hasKey(u"save_path"_qs))
         session->setSavePath(Path(it.value().toString()));
     if (hasKey(u"temp_path_enabled"_qs))
@@ -503,11 +582,16 @@ void AppController::setPreferencesAction()
         pref->setMailNotificationSMTPUsername(it.value().toString());
     if (hasKey(u"mail_notification_password"_qs))
         pref->setMailNotificationSMTPPassword(it.value().toString());
-    // Run an external program on torrent completion
+    // Run an external program on torrent added
+    if (hasKey(u"autorun_on_torrent_added_enabled"_qs))
+        pref->setAutoRunOnTorrentAddedEnabled(it.value().toBool());
+    if (hasKey(u"autorun_on_torrent_added_program"_qs))
+        pref->setAutoRunOnTorrentAddedProgram(it.value().toString());
+    // Run an external program on torrent finished
     if (hasKey(u"autorun_enabled"_qs))
-        pref->setAutoRunEnabled(it.value().toBool());
+        pref->setAutoRunOnTorrentFinishedEnabled(it.value().toBool());
     if (hasKey(u"autorun_program"_qs))
-        pref->setAutoRunProgram(it.value().toString());
+        pref->setAutoRunOnTorrentFinishedProgram(it.value().toString());
 
     // Connection
     // Listening Port
@@ -535,21 +619,29 @@ void AppController::setPreferencesAction()
     auto proxyManager = Net::ProxyConfigurationManager::instance();
     Net::ProxyConfiguration proxyConf = proxyManager->proxyConfiguration();
     if (hasKey(u"proxy_type"_qs))
-        proxyConf.type = static_cast<Net::ProxyType>(it.value().toInt());
+        proxyConf.type = Utils::String::toEnum(it.value().toString(), Net::ProxyType::HTTP);
     if (hasKey(u"proxy_ip"_qs))
         proxyConf.ip = it.value().toString();
     if (hasKey(u"proxy_port"_qs))
         proxyConf.port = it.value().toUInt();
+    if (hasKey(u"proxy_auth_enabled"_qs))
+        proxyConf.authEnabled = it.value().toBool();
     if (hasKey(u"proxy_username"_qs))
         proxyConf.username = it.value().toString();
     if (hasKey(u"proxy_password"_qs))
         proxyConf.password = it.value().toString();
+    if (hasKey(u"proxy_hostname_lookup"_qs))
+        proxyConf.hostnameLookupEnabled = it.value().toBool();
     proxyManager->setProxyConfiguration(proxyConf);
 
+    if (hasKey(u"proxy_bittorrent"_qs))
+        pref->setUseProxyForBT(it.value().toBool());
     if (hasKey(u"proxy_peer_connections"_qs))
         session->setProxyPeerConnectionsEnabled(it.value().toBool());
-    if (hasKey(u"proxy_torrents_only"_qs))
-        proxyManager->setProxyOnlyForTorrents(it.value().toBool());
+    if (hasKey(u"proxy_rss"_qs))
+        pref->setUseProxyForRSS(it.value().toBool());
+    if (hasKey(u"proxy_misc"_qs))
+        pref->setUseProxyForGeneralPurposes(it.value().toBool());
 
     // IP Filtering
     if (hasKey(u"ip_filter_enabled"_qs))
@@ -645,28 +737,6 @@ void AppController::setPreferencesAction()
         session->setAdditionalTrackers(it.value().toString());
 
     // Web UI
-    // Language
-    if (hasKey(u"locale"_qs))
-    {
-        QString locale = it.value().toString();
-        if (pref->getLocale() != locale)
-        {
-            auto *translator = new QTranslator;
-            if (translator->load(u":/lang/qbittorrent_"_qs + locale))
-            {
-                qDebug("%s locale recognized, using translation.", qUtf8Printable(locale));
-            }
-            else
-            {
-                qDebug("%s locale unrecognized, using default (en).", qUtf8Printable(locale));
-            }
-            qApp->installTranslator(translator);
-
-            pref->setLocale(locale);
-        }
-    }
-    if (hasKey(u"performance_warning"_qs))
-        session->setPerformanceWarningEnabled(it.value().toBool());
     // HTTP Server
     if (hasKey(u"web_ui_domain_list"_qs))
         pref->setServerDomains(it.value().toString());
@@ -753,9 +823,12 @@ void AppController::setPreferencesAction()
 
     // Advanced settings
     // qBittorrent preferences
+    // Resume data storage type
+    if (hasKey(u"resume_data_storage_type"_qs))
+        session->setResumeDataStorageType(Utils::String::toEnum(it.value().toString(), BitTorrent::ResumeDataStorageType::Legacy));
     // Physical memory (RAM) usage limit
     if (hasKey(u"memory_working_set_limit"_qs))
-        dynamic_cast<IApplication *>(QCoreApplication::instance())->setMemoryWorkingSetLimit(it.value().toInt());
+        app()->setMemoryWorkingSetLimit(it.value().toInt());
     // Current network interface
     if (hasKey(u"current_network_interface"_qs))
     {
@@ -783,6 +856,9 @@ void AppController::setPreferencesAction()
     // Recheck completed torrents
     if (hasKey(u"recheck_completed_torrents"_qs))
         pref->recheckTorrentsOnCompletion(it.value().toBool());
+    // Refresh interval
+    if (hasKey(u"refresh_interval"_qs))
+        session->setRefreshInterval(it.value().toInt());
     // Resolve peer countries
     if (hasKey(u"resolve_peer_countries"_qs))
         pref->resolvePeerCountries(it.value().toBool());
@@ -814,9 +890,12 @@ void AppController::setPreferencesAction()
     // Disk IO Type
     if (hasKey(u"disk_io_type"_qs))
         session->setDiskIOType(static_cast<BitTorrent::DiskIOType>(it.value().toInt()));
-    // Enable OS cache
-    if (hasKey(u"enable_os_cache"_qs))
-        session->setUseOSCache(it.value().toBool());
+    // Disk IO read mode
+    if (hasKey(u"disk_io_read_mode"_qs))
+        session->setDiskIOReadMode(static_cast<BitTorrent::DiskIOReadMode>(it.value().toInt()));
+    // Disk IO write mode
+    if (hasKey(u"disk_io_write_mode"_qs))
+        session->setDiskIOWriteMode(static_cast<BitTorrent::DiskIOWriteMode>(it.value().toInt()));
     // Coalesce reads & writes
     if (hasKey(u"enable_coalesce_read_write"_qs))
         session->setCoalesceReadWriteEnabled(it.value().toBool());
@@ -836,6 +915,12 @@ void AppController::setPreferencesAction()
     // Outgoing connections per second
     if (hasKey(u"connection_speed"_qs))
         session->setConnectionSpeed(it.value().toInt());
+    // Socket send buffer size
+    if (hasKey(u"socket_send_buffer_size"_qs))
+        session->setSocketSendBufferSize(it.value().toInt());
+    // Socket receive buffer size
+    if (hasKey(u"socket_receive_buffer_size"_qs))
+        session->setSocketReceiveBufferSize(it.value().toInt());
     // Socket listen backlog size
     if (hasKey(u"socket_backlog_size"_qs))
         session->setSocketBacklogSize(it.value().toInt());
@@ -871,6 +956,8 @@ void AppController::setPreferencesAction()
     // Embedded tracker
     if (hasKey(u"embedded_tracker_port"_qs))
         pref->setTrackerPort(it.value().toInt());
+    if (hasKey(u"embedded_tracker_port_forwarding"_qs))
+        pref->setTrackerPortForwardingEnabled(it.value().toBool());
     if (hasKey(u"enable_embedded_tracker"_qs))
         session->setTrackerEnabled(it.value().toBool());
     // Choking algorithm

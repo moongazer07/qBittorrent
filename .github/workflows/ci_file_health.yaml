@@ -2,6 +2,8 @@ name: CI - File health
 
 on: [pull_request, push]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: ${{ github.head_ref != '' }}
@@ -15,7 +17,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install tools
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Check files
         uses: pre-commit/action@v3.0.0

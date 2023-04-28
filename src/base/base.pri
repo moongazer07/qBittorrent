@@ -1,6 +1,7 @@
 HEADERS += \
     $$PWD/3rdparty/expected.hpp \
     $$PWD/algorithm.h \
+    $$PWD/applicationcomponent.h \
     $$PWD/asyncfilestorage.h \
     $$PWD/bittorrent/abstractfilestorage.h \
     $$PWD/bittorrent/addtorrentparams.h \
@@ -28,11 +29,12 @@ HEADERS += \
     $$PWD/bittorrent/portforwarderimpl.h \
     $$PWD/bittorrent/resumedatastorage.h \
     $$PWD/bittorrent/session.h \
+    $$PWD/bittorrent/sessionimpl.h \
     $$PWD/bittorrent/sessionstatus.h \
     $$PWD/bittorrent/speedmonitor.h \
-    $$PWD/bittorrent/statistics.h \
     $$PWD/bittorrent/torrent.h \
     $$PWD/bittorrent/torrentcontentlayout.h \
+    $$PWD/bittorrent/torrentcontenthandler.h \
     $$PWD/bittorrent/torrentcreatorthread.h \
     $$PWD/bittorrent/torrentimpl.h \
     $$PWD/bittorrent/torrentinfo.h \
@@ -100,10 +102,12 @@ HEADERS += \
     $$PWD/utils/password.h \
     $$PWD/utils/random.h \
     $$PWD/utils/string.h \
+    $$PWD/utils/thread.h \
     $$PWD/utils/version.h \
     $$PWD/version.h
 
 SOURCES += \
+    $$PWD/applicationcomponent.cpp \
     $$PWD/asyncfilestorage.cpp \
     $$PWD/bittorrent/abstractfilestorage.cpp \
     $$PWD/bittorrent/bandwidthscheduler.cpp \
@@ -122,10 +126,11 @@ SOURCES += \
     $$PWD/bittorrent/peeraddress.cpp \
     $$PWD/bittorrent/peerinfo.cpp \
     $$PWD/bittorrent/portforwarderimpl.cpp \
-    $$PWD/bittorrent/session.cpp \
+    $$PWD/bittorrent/resumedatastorage.cpp \
+    $$PWD/bittorrent/sessionimpl.cpp \
     $$PWD/bittorrent/speedmonitor.cpp \
-    $$PWD/bittorrent/statistics.cpp \
     $$PWD/bittorrent/torrent.cpp \
+    $$PWD/bittorrent/torrentcontenthandler.h \
     $$PWD/bittorrent/torrentcreatorthread.cpp \
     $$PWD/bittorrent/torrentimpl.cpp \
     $$PWD/bittorrent/torrentinfo.cpp \
@@ -180,4 +185,5 @@ SOURCES += \
     $$PWD/utils/net.cpp \
     $$PWD/utils/password.cpp \
     $$PWD/utils/random.cpp \
-    $$PWD/utils/string.cpp
+    $$PWD/utils/string.cpp \
+    $$PWD/utils/thread.cpp

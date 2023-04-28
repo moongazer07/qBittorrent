@@ -52,12 +52,13 @@ namespace BitTorrent
         TorrentOperatingMode operatingMode = TorrentOperatingMode::AutoManaged;
         bool useAutoTMM = false;
         bool firstLastPiecePriority = false;
-        bool hasSeedStatus = false;
+        bool hasFinishedStatus = false;
         bool stopped = false;
+        Torrent::StopCondition stopCondition;
+
+        bool addToQueueTop = false; // only for new torrents
 
         qreal ratioLimit = Torrent::USE_GLOBAL_RATIO;
         int seedingTimeLimit = Torrent::USE_GLOBAL_SEEDING_TIME;
-
-        bool restored = false;  // is existing torrent job?
     };
 }

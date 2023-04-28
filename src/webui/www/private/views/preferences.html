@@ -1,4 +1,49 @@
-<div id="DownloadsTab" class="PrefTab">
+<div id="BehaviorTab" class="PrefTab">
+    <fieldset class="settings">
+        <legend>QBT_TR(Language)QBT_TR[CONTEXT=OptionsDialog]</legend>
+        <label for="locale_select">QBT_TR(User Interface Language:)QBT_TR[CONTEXT=OptionsDialog]</label>
+        <select id="locale_select">
+            ${LANGUAGE_OPTIONS}
+        </select>
+    </fieldset>
+
+    <fieldset class="settings">
+        <legend>
+            <input type="checkbox" id="filelog_checkbox" onclick="qBittorrent.Preferences.updateFileLogEnabled();" />
+            <label for="filelog_checkbox">QBT_TR(Log file)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </legend>
+        <div class="formRow">
+            <label for="filelog_save_path_input">QBT_TR(Save path:)QBT_TR[CONTEXT=OptionsDialog]</label>
+            <input type="text" id="filelog_save_path_input" />
+        </div>
+        <table>
+            <tr>
+                <td><input type="checkbox" id="filelog_backup_checkbox" onclick="qBittorrent.Preferences.updateFileLogBackupEnabled();" /></td>
+                <td><label for="filelog_backup_checkbox">QBT_TR(Backup the log file after:)QBT_TR[CONTEXT=OptionsDialog]</label></td>
+                <td><input id="filelog_max_size_input" type="number" min="1" max="1024000" value="65" onchange="qBittorrent.Preferences.numberInputLimiter(this);" />QBT_TR(KiB)QBT_TR[CONTEXT=OptionsDialog]</td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="filelog_delete_old_checkbox" onclick="qBittorrent.Preferences.updateFileLogDeleteEnabled();" /></td>
+                <td><label for="filelog_delete_old_checkbox">QBT_TR(Delete backup logs older than:)QBT_TR[CONTEXT=OptionsDialog]</label></td>
+                <td>
+                    <input type="number" min="1" max="365" value="6" id="filelog_age_input" onchange="qBittorrent.Preferences.numberInputLimiter(this);" />
+                    <select id="filelog_age_type_select">
+                        <option value="0">QBT_TR(days)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="1" selected>QBT_TR(months)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="2">QBT_TR(years)QBT_TR[CONTEXT=OptionsDialog]</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <div class="formRow">
+        <input type="checkbox" id="performanceWarning" />
+        <label for="performanceWarning">QBT_TR(Log performance warnings)QBT_TR[CONTEXT=OptionsDialog]</label>
+    </div>
+</div>
+
+<div id="DownloadsTab" class="PrefTab invisible">
     <fieldset class="settings">
         <legend>QBT_TR(When adding a torrent)QBT_TR[CONTEXT=OptionsDialog]</legend>
         <div class="formRow">
@@ -10,8 +55,20 @@
             </select>
         </div>
         <div class="formRow">
+            <input type="checkbox" id="addToTopOfQueueCheckbox" />
+            <label for="addToTopOfQueueCheckbox">QBT_TR(Add to top of queue)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </div>
+        <div class="formRow">
             <input type="checkbox" id="dontstartdownloads_checkbox" />
             <label for="dontstartdownloads_checkbox">QBT_TR(Do not start the download automatically)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </div>
+        <div class="formRow">
+            <label for="stopConditionSelect">QBT_TR(Torrent stop condition:)QBT_TR[CONTEXT=OptionsDialog]</label>
+            <select id="stopConditionSelect">
+                <option value="None">QBT_TR(None)QBT_TR[CONTEXT=OptionsDialog]</option>
+                <option value="MetadataReceived">QBT_TR(Metadata received)QBT_TR[CONTEXT=OptionsDialog]</option>
+                <option value="FilesChecked">QBT_TR(Files checked)QBT_TR[CONTEXT=OptionsDialog]</option>
+            </select>
         </div>
         <div class="formRow">
             <input type="checkbox" id="deletetorrentfileafter_checkbox" />
@@ -78,6 +135,10 @@
                 </td>
             </tr>
         </table>
+        <div class="formRow">
+            <input type="checkbox" id="use_subcategories_checkbox" />
+            <label for="use_subcategories_checkbox">QBT_TR(Use Subcategories)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </div>
         <table>
             <tr>
                 <td>
@@ -200,10 +261,16 @@
 
     <fieldset class="settings">
         <legend>
-            <input type="checkbox" id="autorun_checkbox" onclick="qBittorrent.Preferences.updateAutoRun();" />
-            <label for="autorun_checkbox">QBT_TR(Run external program on torrent completion)QBT_TR[CONTEXT=OptionsDialog]</label>
+            QBT_TR(Run external program)QBT_TR[CONTEXT=OptionsDialog]
         </legend>
         <div class="formRow">
+            <input type="checkbox" id="autorunOnTorrentAddedCheckbox" onclick="qBittorrent.Preferences.updateAutoRunOnTorrentAdded();" />
+            <label for="autorunOnTorrentAddedCheckbox">QBT_TR(Run external program on torrent added)QBT_TR[CONTEXT=OptionsDialog]</label>
+            <input type="text" id="autorunOnTorrentAddedProgram" style="width: 400px;" />
+        </div>
+        <div class="formRow">
+            <input type="checkbox" id="autorun_checkbox" onclick="qBittorrent.Preferences.updateAutoRun();" />
+            <label for="autorun_checkbox">QBT_TR(Run external program on torrent finished)QBT_TR[CONTEXT=OptionsDialog]</label>
             <input type="text" id="autorunProg_txt" style="width: 400px;" />
         </div>
         <div style="font-style: italic;">QBT_TR(Supported parameters (case sensitive):)QBT_TR[CONTEXT=OptionsDialog]
@@ -240,7 +307,7 @@
         <div class="formRow">
             <label for="port_value">QBT_TR(Port used for incoming connections:)QBT_TR[CONTEXT=OptionsDialog]</label>
             <input type="text" id="port_value" style="width: 4em;" title="QBT_TR(Set to 0 to let your system pick an unused port)QBT_TR[CONTEXT=OptionsDialog]" />
-            <button style="margin-left: 1em;" onclick="qBittorrent.Preferences.generateRandomPort();">QBT_TR(Random)QBT_TR[CONTEXT=OptionsDialog]</button>
+            <button type="button" style="margin-left: 1em;" onclick="qBittorrent.Preferences.generateRandomPort();">QBT_TR(Random)QBT_TR[CONTEXT=OptionsDialog]</button>
         </div>
         <div class="formRow">
             <input type="checkbox" id="upnp_checkbox" />
@@ -291,10 +358,9 @@
                 </td>
                 <td>
                     <select id="peer_proxy_type_select" onchange="qBittorrent.Preferences.updatePeerProxySettings();">
-                        <option value="none">QBT_TR((None))QBT_TR[CONTEXT=OptionsDialog]</option>
-                        <option value="socks4">QBT_TR(SOCKS4)QBT_TR[CONTEXT=OptionsDialog]</option>
-                        <option value="socks5">QBT_TR(SOCKS5)QBT_TR[CONTEXT=OptionsDialog]</option>
-                        <option value="http">QBT_TR(HTTP)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="SOCKS4">QBT_TR(SOCKS4)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="SOCKS5">QBT_TR(SOCKS5)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="HTTP">QBT_TR(HTTP)QBT_TR[CONTEXT=OptionsDialog]</option>
                     </select>
                 </td>
                 <td>
@@ -311,14 +377,12 @@
                 </td>
             </tr>
         </table>
+
         <div class="formRow">
-            <input type="checkbox" id="use_peer_proxy_checkbox" />
-            <label for="use_peer_proxy_checkbox">QBT_TR(Use proxy for peer connections)QBT_TR[CONTEXT=OptionsDialog]</label>
+            <input type="checkbox" id="proxyHostnameLookupCheckbox" title="QBT_TR(If checked, hostname lookups are done via the proxy.)QBT_TR[CONTEXT=OptionsDialog]" />
+            <label for="proxyHostnameLookupCheckbox">QBT_TR(Use proxy for hostname lookup)QBT_TR[CONTEXT=OptionsDialog]</label>
         </div>
-        <div class="formRow">
-            <input type="checkbox" id="proxy_only_for_torrents_checkbox" />
-            <label for="proxy_only_for_torrents_checkbox">QBT_TR(Use proxy only for torrents)QBT_TR[CONTEXT=OptionsDialog]</label>
-        </div>
+
         <fieldset class="settings">
             <legend>
                 <input type="checkbox" id="peer_proxy_auth_checkbox" onclick="qBittorrent.Preferences.updatePeerProxyAuthSettings();" />
@@ -346,6 +410,25 @@
                 <span>QBT_TR(Info: The password is saved unencrypted)QBT_TR[CONTEXT=OptionsDialog]</span>
             </div>
         </fieldset>
+
+        <fieldset class="settings">
+            <legend>
+                <input type="checkbox" id="proxy_bittorrent_checkbox" onclick="qBittorrent.Preferences.updatePeerProxySettings();" />
+                <label for="proxy_bittorrent_checkbox">QBT_TR(Use proxy for BitTorrent purposes)QBT_TR[CONTEXT=OptionsDialog]</label>
+            </legend>
+            <div class="formRow">
+                <input type="checkbox" id="use_peer_proxy_checkbox" />
+                <label for="use_peer_proxy_checkbox">QBT_TR(Use proxy for peer connections)QBT_TR[CONTEXT=OptionsDialog]</label>
+            </div>
+        </fieldset>
+        <div class="formRow">
+            <input type="checkbox" id="proxy_rss_checkbox" />
+            <label for="proxy_rss_checkbox">QBT_TR(Use proxy for RSS purposes)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </div>
+        <div class="formRow">
+            <input type="checkbox" id="proxy_misc_checkbox" />
+            <label for="proxy_misc_checkbox">QBT_TR(Use proxy for general purposes)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </div>
     </fieldset>
 
     <fieldset class="settings">
@@ -376,7 +459,7 @@
         <table>
             <tr>
                 <td rowspan="2">
-                    <img src="icons/slow_off.svg" style="height: 1em;" alt="QBT_TR(Alternative speed limits)QBT_TR[CONTEXT=MainWindow]">
+                    <img src="images/slow_off.svg" style="height: 1.5em;" alt="QBT_TR(Alternative speed limits)QBT_TR[CONTEXT=MainWindow]">
                 </td>
                 <td><label for="up_limit_value">QBT_TR(Upload:)QBT_TR[CONTEXT=OptionsDialog]</label></td>
                 <td><input type="number" id="up_limit_value" style="width: 4em;" min="0" />&nbsp;&nbsp;QBT_TR(KiB/s)QBT_TR[CONTEXT=OptionsDialog]</td>
@@ -394,7 +477,7 @@
         <table>
             <tr>
                 <td rowspan="2">
-                    <img src="icons/slow.svg" style="height: 1em;" alt="QBT_TR(Alternative speed limits)QBT_TR[CONTEXT=MainWindow]">
+                    <img src="images/slow.svg" style="height: 1.5em;" alt="QBT_TR(Alternative speed limits)QBT_TR[CONTEXT=MainWindow]">
                 </td>
                 <td><label for="alt_up_limit_value">QBT_TR(Upload:)QBT_TR[CONTEXT=OptionsDialog]</label></td>
                 <td><input type="number" id="alt_up_limit_value" style="width: 4em;" min="0" />&nbsp;&nbsp;QBT_TR(KiB/s)QBT_TR[CONTEXT=OptionsDialog]</td>
@@ -413,7 +496,8 @@
             </legend>
             <div class="formRow">
                 QBT_TR(From:)QBT_TR[CONTEXT=OptionsDialog]
-                <input type="text" id="schedule_from_hour" style="width: 1.5em;" />:<input type="text" id="schedule_from_min" style="width: 1.5em;" /> QBT_TR(To:)QBT_TR[CONTEXT=OptionsDialog]
+                <input type="text" id="schedule_from_hour" style="width: 1.5em;" />:<input type="text" id="schedule_from_min" style="width: 1.5em;" />
+                QBT_TR(To:)QBT_TR[CONTEXT=OptionsDialog]
                 <input type="text" id="schedule_to_hour" style="width: 1.5em;" />:<input type="text" id="schedule_to_min" style="width: 1.5em;" />
             </div>
             <div class="formRow">
@@ -627,7 +711,7 @@
             <input type="checkbox" id="enable_auto_downloading_rss_torrents_checkbox" />
             <label for="enable_auto_downloading_rss_torrents_checkbox">QBT_TR(Enable auto downloading of RSS torrents)QBT_TR[CONTEXT=OptionsDialog]</label>
         </div>
-        <button style="margin: 0 1em; width: calc(100% - 2.2em)" onclick="window.qBittorrent.Rss.openRssDownloader();">QBT_TR(Edit auto downloading rules...)QBT_TR[CONTEXT=OptionsDialog]</button>
+        <button type="button" style="margin: 0 1em; width: calc(100% - 2.2em)" onclick="window.qBittorrent.Rss.openRssDownloader();">QBT_TR(Edit auto downloading rules...)QBT_TR[CONTEXT=OptionsDialog]</button>
     </fieldset>
 
     <fieldset class="settings">
@@ -643,74 +727,6 @@
 </div>
 
 <div id="WebUITab" class="PrefTab invisible">
-    <fieldset class="settings">
-        <legend>QBT_TR(Language)QBT_TR[CONTEXT=OptionsDialog]</legend>
-        <label for="locale_select">QBT_TR(User Interface Language:)QBT_TR[CONTEXT=OptionsDialog]</label>
-        <select id="locale_select">
-            <option value="ar_AE">عربي</option>
-            <option value="az@latin">Azərbaycan dili</option>
-            <option value="be_BY">Беларуская</option>
-            <option value="bg_BG">Български</option>
-            <option value="ca_ES">Català</option>
-            <option value="cs_CZ">Čeština</option>
-            <option value="da_DK">Dansk</option>
-            <option value="de_DE">Deutsch</option>
-            <option value="el_GR">Ελληνικά</option>
-            <option value="en">English</option>
-            <option value="en_AU">English (Australia)</option>
-            <option value="en_GB">English (United Kingdom)</option>
-            <option value="eo_EO">Esperanto</option>
-            <option value="es_ES">Español</option>
-            <option value="et">Eesti, eesti keel</option>
-            <option value="eu_ES">Euskara</option>
-            <option value="fa">فارسی</option>
-            <option value="fi_FI">Suomi</option>
-            <option value="fr_FR">Français</option>
-            <option value="gl_ES">Galego</option>
-            <option value="he_IL">עברית</option>
-            <option value="hi_IN">हिन्दी, हिंदी</option>
-            <option value="hr_HR">Hrvatski</option>
-            <option value="hu_HU">Magyar</option>
-            <option value="hy_AM">Հայերեն</option>
-            <option value="id">Bahasa Indonesia</option>
-            <option value="is">Íslenska</option>
-            <option value="it_IT">Italiano</option>
-            <option value="ja_JP">日本語</option>
-            <option value="ka_GE">ქართული</option>
-            <option value="ko_KR">한국어</option>
-            <option value="ltg">Latgalīšu volūda</option>
-            <option value="lt_LT">Lietuvių</option>
-            <option value="lv_LV">Latviešu valoda</option>
-            <option value="mn_MN">Монгол хэл</option>
-            <option value="ms_MY">بهاس ملايو</option>
-            <option value="nb_NO">Norsk</option>
-            <option value="nl_NL">Nederlands</option>
-            <option value="oc">lenga d'òc</option>
-            <option value="pl_PL">Polski</option>
-            <option value="pt_BR">Português brasileiro</option>
-            <option value="pt_PT">Português</option>
-            <option value="ro_RO">Română</option>
-            <option value="ru_RU">Русский</option>
-            <option value="sk_SK">Slovenčina</option>
-            <option value="sl_SI">Slovenščina</option>
-            <option value="sr_CS">Српски</option>
-            <option value="sv_SE">Svenska</option>
-            <option value="th">ไทย</option>
-            <option value="tr_TR">Türkçe</option>
-            <option value="uk_UA">Українська</option>
-            <option value="uz@Latn">أۇزبېك</option>
-            <option value="vi_VN">Tiếng Việt</option>
-            <option value="zh">简体中文</option>
-            <option value="zh_HK">香港正體字</option>
-            <option value="zh_TW">正體中文</option>
-        </select>
-    </fieldset>
-
-    <div class="formRow">
-        <input type="checkbox" id="performanceWarning" />
-        <label for="performanceWarning">QBT_TR(Log performance warnings)QBT_TR[CONTEXT=OptionsDialog]</label>
-    </div>
-
     <fieldset class="settings">
         <legend>QBT_TR(Web User Interface (Remote control))QBT_TR[CONTEXT=OptionsDialog]</legend>
         <table>
@@ -784,7 +800,7 @@
                 <label for="bypass_auth_subnet_whitelist_checkbox">QBT_TR(Bypass authentication for clients in whitelisted IP subnets)QBT_TR[CONTEXT=OptionsDialog]</label>
             </div>
             <div class="formRow" style="padding-left: 30px; padding-top: 5px;">
-                <textarea id="bypass_auth_subnet_whitelist_textarea" rows="5" cols="48" placeholder="Example: 172.17.32.0/24, fdff:ffff:c8::/40"></textarea>
+                <textarea id="bypass_auth_subnet_whitelist_textarea" rows="5" cols="48" placeholder="QBT_TR(Example: 172.17.32.0/24, fdff:ffff:c8::/40)QBT_TR[CONTEXT=OptionsDialog]"></textarea>
             </div>
             <table>
                 <tr>
@@ -840,7 +856,11 @@
                             <label for="webui_domain_textarea">QBT_TR(Server domains:)QBT_TR[CONTEXT=OptionsDialog]</label>
                         </td>
                         <td>
-                            <textarea id="webui_domain_textarea" rows="1" cols="60"></textarea>
+                            <textarea id="webui_domain_textarea" rows="1" cols="60" title="QBT_TR(Whitelist for filtering HTTP Host header values.
+In order to defend against DNS rebinding attack,
+you should put in domain names used by WebUI server.
+
+Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsDialog]"></textarea>
                         </td>
                     </tr>
                 </table>
@@ -862,7 +882,7 @@
             </legend>
             <div class="formRow">
                 <label for="webUIReverseProxiesListTextarea">QBT_TR(Trusted proxies list:)QBT_TR[CONTEXT=OptionsDialog]</label>
-                <input type="text" id="webUIReverseProxiesListTextarea" />
+                <input type="text" id="webUIReverseProxiesListTextarea" title="QBT_TR(Specify reverse proxy IPs (or subnets, e.g. 0.0.0.0/24) in order to use forwarded client address (X-Forwarded-For header). Use ';' to split multiple entries.)QBT_TR[CONTEXT=OptionsDialog]" />
             </div>
         </fieldset>
 
@@ -913,7 +933,18 @@
         <table>
             <tr>
                 <td>
-                    <label for="memoryWorkingSetLimit">QBT_TR(Physical memory (RAM) usage limit:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://wikipedia.org/wiki/Working_set" target="_blank">(?)</a></label>
+                    <label for="resumeDataStorageType">QBT_TR(Resume data storage type (requires restart):)QBT_TR[CONTEXT=OptionsDialog]</label>
+                </td>
+                <td>
+                    <select id="resumeDataStorageType" style="width: 15em;">
+                        <option value="Legacy">QBT_TR(Fastresume files)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="SQLite">QBT_TR(SQLite database (experimental))QBT_TR[CONTEXT=OptionsDialog]</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="memoryWorkingSetLimit">QBT_TR(Physical memory (RAM) usage limit (applied if libtorrent &gt;= 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://wikipedia.org/wiki/Working_set" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="memoryWorkingSetLimit" style="width: 15em;" title="QBT_TR(This option is less effective on Linux)QBT_TR[CONTEXT=OptionsDialog]">&nbsp;&nbsp;QBT_TR(MiB)QBT_TR[CONTEXT=OptionsDialog]
@@ -955,6 +986,14 @@
             </tr>
             <tr>
                 <td>
+                    <label for="refreshInterval">QBT_TR(Refresh interval:)QBT_TR[CONTEXT=OptionsDialog]</label>
+                </td>
+                <td>
+                    <input type="text" id="refreshInterval" style="width: 15em;" title="QBT_TR(It controls the internal state update interval which in turn will affect UI updates)QBT_TR[CONTEXT=OptionsDialog]">&nbsp;&nbsp;QBT_TR(ms)QBT_TR[CONTEXT=OptionsDialog]
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="resolvePeerCountries">QBT_TR(Resolve peer countries:)QBT_TR[CONTEXT=OptionsDialog]</label>
                 </td>
                 <td>
@@ -985,6 +1024,14 @@
                     <input type="text" id="embeddedTrackerPort" style="width: 15em;" />
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <label for="embeddedTrackerPortForwarding">QBT_TR(Enable port forwarding for embedded tracker:)QBT_TR[CONTEXT=OptionsDialog]</label>
+                </td>
+                <td>
+                    <input type="checkbox" id="embeddedTrackerPortForwarding" />
+                </td>
+            </tr>
         </table>
     </fieldset>
     <fieldset class="settings">
@@ -1000,7 +1047,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="hashingThreads">QBT_TR(Hashing threads (requires libtorrent >= 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#hashing_threads" target="_blank">(?)</a></label>
+                    <label for="hashingThreads">QBT_TR(Hashing threads (requires libtorrent &gt;= 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#hashing_threads" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="hashingThreads" style="width: 15em;" />
@@ -1024,7 +1071,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="diskCache">QBT_TR(Disk cache (requires libtorrent < 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#cache_size" target="_blank">(?)</a></label>
+                    <label for="diskCache">QBT_TR(Disk cache (requires libtorrent &lt; 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#cache_size" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="diskCache" style="width: 15em;" />&nbsp;&nbsp;QBT_TR(MiB)QBT_TR[CONTEXT=OptionsDialog]
@@ -1032,7 +1079,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="diskCacheExpiryInterval">QBT_TR(Disk cache expiry interval (requires libtorrent < 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#cache_expiry" target="_blank">(?)</a></label>
+                    <label for="diskCacheExpiryInterval">QBT_TR(Disk cache expiry interval (requires libtorrent &lt; 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#cache_expiry" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="diskCacheExpiryInterval" style="width: 15em;">&nbsp;&nbsp;QBT_TR(s)QBT_TR[CONTEXT=OptionsDialog]
@@ -1048,7 +1095,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="diskIOType">QBT_TR(Disk IO type (libtorrent >= 2.0; requires restart):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/single-page-ref.html#default-disk-io-constructor" target="_blank">(?)</a></label>
+                    <label for="diskIOType">QBT_TR(Disk IO type (libtorrent &gt;= 2.0; requires restart):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/single-page-ref.html#default-disk-io-constructor" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <select id="diskIOType" style="width: 15em;">
@@ -1060,15 +1107,30 @@
             </tr>
             <tr>
                 <td>
-                    <label for="enableOSCache">QBT_TR(Enable OS cache:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#disk_io_write_mode" target="_blank">(?)</a></label>
+                    <label for="diskIOReadMode">QBT_TR(Disk IO read mode:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#disk_io_read_mode" target="_blank">(?)</a></label>
                 </td>
                 <td>
-                    <input type="checkbox" id="enableOSCache" />
+                    <select id="diskIOReadMode" style="width: 15em;">
+                        <option value="0">QBT_TR(Disable OS cache)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="1">QBT_TR(Enable OS cache)QBT_TR[CONTEXT=OptionsDialog]</option>
+                    </select>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <label for="coalesceReadsAndWrites">QBT_TR(Coalesce reads & writes (requires libtorrent < 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#coalesce_reads" target="_blank">(?)</a></label>
+                    <label for="diskIOWriteMode">QBT_TR(Disk IO write mode:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#disk_io_write_mode" target="_blank">(?)</a></label>
+                </td>
+                <td>
+                    <select id="diskIOWriteMode" style="width: 15em;">
+                        <option value="0">QBT_TR(Disable OS cache)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="1">QBT_TR(Enable OS cache)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="2">QBT_TR(Write-through (requires libtorrent &gt;= 2.0.6))QBT_TR[CONTEXT=OptionsDialog]</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="coalesceReadsAndWrites">QBT_TR(Coalesce reads &amp; writes (requires libtorrent &lt; 2.0):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#coalesce_reads" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="checkbox" id="coalesceReadsAndWrites" />
@@ -1076,7 +1138,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="pieceExtentAffinity">QBT_TR(Use piece extent affinity (requires libtorrent >= 1.2.2):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://libtorrent.org/single-page-ref.html#piece_extent_affinity" target="_blank">(?)</a></label>
+                    <label for="pieceExtentAffinity">QBT_TR(Use piece extent affinity:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://libtorrent.org/single-page-ref.html#piece_extent_affinity" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="checkbox" id="pieceExtentAffinity" />
@@ -1124,6 +1186,22 @@
             </tr>
             <tr>
                 <td>
+                    <label for="socketSendBufferSize">QBT_TR(Socket send buffer size [0: system default]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#send_socket_buffer_size" target="_blank">(?)</a></label>
+                </td>
+                <td>
+                    <input type="text" id="socketSendBufferSize" style="width: 15em;" />&nbsp;&nbsp;QBT_TR(KiB)QBT_TR[CONTEXT=OptionsDialog]
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="socketReceiveBufferSize">QBT_TR(Socket receive buffer size [0: system default]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#recv_socket_buffer_size" target="_blank">(?)</a></label>
+                </td>
+                <td>
+                    <input type="text" id="socketReceiveBufferSize" style="width: 15em;" />&nbsp;&nbsp;QBT_TR(KiB)QBT_TR[CONTEXT=OptionsDialog]
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="socketBacklogSize">QBT_TR(Socket backlog size:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#listen_queue_size" target="_blank">(?)</a></label>
                 </td>
                 <td>
@@ -1132,7 +1210,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="outgoingPortsMin">QBT_TR(Outgoing ports (Min) [0: Disabled]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#outgoing_port" target="_blank">(?)</a></label>
+                    <label for="outgoingPortsMin">QBT_TR(Outgoing ports (Min) [0: disabled]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#outgoing_port" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="outgoingPortsMin" style="width: 15em;" />
@@ -1140,7 +1218,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="outgoingPortsMax">QBT_TR(Outgoing ports (Max) [0: Disabled]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#outgoing_port" target="_blank">(?)</a></label>
+                    <label for="outgoingPortsMax">QBT_TR(Outgoing ports (Max) [0: disabled]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#outgoing_port" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="outgoingPortsMax" style="width: 15em;" />
@@ -1148,7 +1226,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="UPnPLeaseDuration">QBT_TR(UPnP lease duration [0: Permanent lease]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#upnp_lease_duration" target="_blank">(?)</a></label>
+                    <label for="UPnPLeaseDuration">QBT_TR(UPnP lease duration [0: permanent lease]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#upnp_lease_duration" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="UPnPLeaseDuration" style="width: 15em;" />
@@ -1175,7 +1253,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="IDNSupportCheckbox">QBT_TR(Support internationalized domain name (IDN) (requires libtorrent >= 1.2.12):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#allow_idna" target="_blank">(?)</a></label>
+                    <label for="IDNSupportCheckbox">QBT_TR(Support internationalized domain name (IDN):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#allow_idna" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="checkbox" id="IDNSupportCheckbox" />
@@ -1262,7 +1340,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="maxConcurrentHTTPAnnounces">QBT_TR(Max concurrent HTTP announces (requires libtorrent >= 1.2.7):)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#max_concurrent_http_announces" target="_blank">(?)</a></label>
+                    <label for="maxConcurrentHTTPAnnounces">QBT_TR(Max concurrent HTTP announces:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#max_concurrent_http_announces" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="maxConcurrentHTTPAnnounces" style="width: 15em;" />
@@ -1270,7 +1348,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="stopTrackerTimeout">QBT_TR(Stop tracker timeout:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#stop_tracker_timeout" target="_blank">(?)</a></label>
+                    <label for="stopTrackerTimeout">QBT_TR(Stop tracker timeout [0: disabled]:)QBT_TR[CONTEXT=OptionsDialog]&nbsp;<a href="https://www.libtorrent.org/reference-Settings.html#stop_tracker_timeout" target="_blank">(?)</a></label>
                 </td>
                 <td>
                     <input type="text" id="stopTrackerTimeout" style="width: 15em;" />
@@ -1324,6 +1402,10 @@
     window.qBittorrent.Preferences = (function() {
         const exports = function() {
             return {
+                numberInputLimiter: numberInputLimiter,
+                updateFileLogEnabled: updateFileLogEnabled,
+                updateFileLogBackupEnabled: updateFileLogBackupEnabled,
+                updateFileLogDeleteEnabled: updateFileLogDeleteEnabled,
                 updateTempDirEnabled: updateTempDirEnabled,
                 updateExportDirEnabled: updateExportDirEnabled,
                 updateExportDirFinEnabled: updateExportDirFinEnabled,
@@ -1333,6 +1415,7 @@
                 updateMailNotification: updateMailNotification,
                 updateMailAuthSettings: updateMailAuthSettings,
                 updateAutoRun: updateAutoRun,
+                updateAutoRunOnTorrentAdded: updateAutoRunOnTorrentAdded,
                 generateRandomPort: generateRandomPort,
                 updateMaxConnecEnabled: updateMaxConnecEnabled,
                 updateMaxConnecPerTorrentEnabled: updateMaxConnecPerTorrentEnabled,
@@ -1353,9 +1436,43 @@
                 updateWebUICustomHTTPHeadersSettings: updateWebUICustomHTTPHeadersSettings,
                 updateWebUIReverseProxySettings: updateWebUIReverseProxySettings,
                 updateDynDnsSettings: updateDynDnsSettings,
+                updateWebuiLocaleSelect: updateWebuiLocaleSelect,
                 registerDynDns: registerDynDns,
                 applyPreferences: applyPreferences
             };
+        };
+
+        // Behavior tab
+        const numberInputLimiter = (input) => {
+            const min = input.getAttribute("min");
+            const max = input.getAttribute("max");
+
+            if (min && input.value.toInt() < min.toInt())
+                input.value = min;
+
+            if (max && input.value.toInt() > max.toInt())
+                input.value = max;
+        };
+
+        const updateFileLogEnabled = function() {
+            const isFileLogEnabled = $('filelog_checkbox').getProperty('checked');
+            $('filelog_save_path_input').setProperty('disabled', !isFileLogEnabled);
+            $('filelog_backup_checkbox').setProperty('disabled', !isFileLogEnabled);
+            $('filelog_delete_old_checkbox').setProperty('disabled', !isFileLogEnabled);
+
+            updateFileLogBackupEnabled();
+            updateFileLogDeleteEnabled();
+        };
+
+        const updateFileLogBackupEnabled = function() {
+            const pros = $('filelog_backup_checkbox').getProperties('disabled', 'checked');
+            $('filelog_max_size_input').setProperty('disabled', pros.disabled || !pros.checked);
+        };
+
+        const updateFileLogDeleteEnabled = function() {
+            const pros = $('filelog_delete_old_checkbox').getProperties('disabled', 'checked');
+            $('filelog_age_input').setProperty('disabled', pros.disabled || !pros.checked);
+            $('filelog_age_type_select').setProperty('disabled', pros.disabled || !pros.checked);
         };
 
         // Downloads tab
@@ -1390,7 +1507,7 @@
                 + "<option value='other'>QBT_TR(Other...)QBT_TR[CONTEXT=ScanFoldersModel]</option>"
                 + "</select>"
                 + "<input id='cb_watch_txt_" + pos + "' type='text' " + (disableInput ? "hidden " : "") + "/>"
-                + "<img src='icons/list-add.svg' id='addFolderImg_" + pos + "' alt='Add' style='padding-left:170px;width:16px;cursor:pointer;' onclick='qBittorrent.Preferences.addWatchFolder();' />"
+                + "<img src='images/list-add.svg' id='addFolderImg_" + pos + "' alt='Add' style='padding-left:170px;width:16px;cursor:pointer;' onclick='qBittorrent.Preferences.addWatchFolder();' />"
                 + "</div>";
 
             watchedFoldersTable.push([myinput, mycb]);
@@ -1461,6 +1578,11 @@
             $('mail_password_text').setProperty('disabled', !isMailAuthEnabled);
         };
 
+        const updateAutoRunOnTorrentAdded = function() {
+            const isAutoRunOnTorrentAddedEnabled = $('autorunOnTorrentAddedCheckbox').getProperty('checked');
+            $('autorunOnTorrentAddedProgram').setProperty('disabled', !isAutoRunOnTorrentAddedEnabled);
+        };
+
         const updateAutoRun = function() {
             const isAutoRunEnabled = $('autorun_checkbox').getProperty('checked');
             $('autorunProg_txt').setProperty('disabled', !isAutoRunEnabled);
@@ -1489,17 +1611,14 @@
         };
 
         const updatePeerProxySettings = function() {
-            const isPeerProxyTypeSelected = $('peer_proxy_type_select').getProperty('value') != "none";
-            $('peer_proxy_host_text').setProperty('disabled', !isPeerProxyTypeSelected);
-            $('peer_proxy_port_value').setProperty('disabled', !isPeerProxyTypeSelected);
-            $('use_peer_proxy_checkbox').setProperty('disabled', !isPeerProxyTypeSelected);
-            const isPeerProxyAuthenticatable = ($('peer_proxy_type_select').getProperty('value') === "socks5" || $('peer_proxy_type_select').getProperty('value') === "http");
-            $('proxy_only_for_torrents_checkbox').setProperty('disabled', !isPeerProxyAuthenticatable);
+            const proxyType = $('peer_proxy_type_select').getProperty('value');
+            const isProxySocks4 = (proxyType === "SOCKS4");
 
-            if ($('peer_proxy_type_select').getProperty('value') === "socks4")
-                $('proxy_only_for_torrents_checkbox').setProperty('checked', true);
-
-            $('peer_proxy_auth_checkbox').setProperty('disabled', !isPeerProxyAuthenticatable);
+            $('peer_proxy_auth_checkbox').setProperty('disabled', isProxySocks4);
+            $('use_peer_proxy_checkbox').setProperty('disabled', !$('proxy_bittorrent_checkbox').getProperty('checked'));
+            $('proxyHostnameLookupCheckbox').setProperty('disabled', isProxySocks4);
+            $('proxy_rss_checkbox').setProperty('disabled', isProxySocks4);
+            $('proxy_misc_checkbox').setProperty('disabled', isProxySocks4);
 
             updatePeerProxyAuthSettings();
         };
@@ -1673,6 +1792,18 @@
             }).send();
         };
 
+        const updateWebuiLocaleSelect = (selected) => {
+            let languages = [];
+            for (let i = 0; i < $('locale_select').options.length; i++)
+                languages.push($('locale_select').options[i].value);
+
+            if (!languages.includes(selected)) {
+                const lang = selected.slice(0, selected.indexOf('_'));
+                selected = languages.includes(lang) ? lang : 'en';
+            }
+            $('locale_select').setProperty('value', selected);
+        };
+
         const loadPreferences = function() {
             const url = 'api/v2/app/preferences';
             new Request.JSON({
@@ -1684,6 +1815,16 @@
                 },
                 onSuccess: function(pref) {
                     if (pref) {
+                        // Behavior tab
+                        $('filelog_checkbox').setProperty('checked', pref.file_log_enabled);
+                        $('filelog_save_path_input').setProperty('value', pref.file_log_path);
+                        $('filelog_backup_checkbox').setProperty('checked', pref.file_log_backup_enabled);
+                        $('filelog_max_size_input').setProperty('value', pref.file_log_max_size);
+                        $('filelog_delete_old_checkbox').setProperty('checked', pref.file_log_delete_old);
+                        $('filelog_age_input').setProperty('value', pref.file_log_age);
+                        $('filelog_age_type_select').setProperty('value', pref.file_log_age_type);
+                        updateFileLogEnabled();
+
                         // Downloads tab
                         // When adding a torrent
                         let index = 0;
@@ -1699,7 +1840,20 @@
                                 break;
                         }
                         $('contentlayout_select').getChildren('option')[index].setAttribute('selected', '');
+                        $('addToTopOfQueueCheckbox').setProperty('checked', pref.add_to_top_of_queue);
                         $('dontstartdownloads_checkbox').setProperty('checked', pref.start_paused_enabled);
+                        switch (pref.torrent_stop_condition) {
+                            case "None":
+                                index = 0;
+                                break;
+                            case "MetadataReceived":
+                                index = 1;
+                                break;
+                            case "FilesChecked":
+                                index = 2;
+                                break;
+                        }
+                        $('stopConditionSelect').getChildren('option')[index].setAttribute('selected', '');
                         $('deletetorrentfileafter_checkbox').setProperty('checked', pref.auto_delete_mode);
 
                         $('preallocateall_checkbox').setProperty('checked', pref.preallocate_all);
@@ -1710,6 +1864,7 @@
                         $('torrent_changed_tmm_combobox').setProperty('value', pref.torrent_changed_tmm_enabled);
                         $('save_path_changed_tmm_combobox').setProperty('value', pref.save_path_changed_tmm_enabled);
                         $('category_changed_tmm_combobox').setProperty('value', pref.category_changed_tmm_enabled);
+                        $('use_subcategories_checkbox').setProperty('checked', pref.use_subcategories);
                         $('savepath_text').setProperty('value', pref.save_path);
                         $('temppath_checkbox').setProperty('checked', pref.temp_path_enabled);
                         $('temppath_text').setProperty('value', pref.temp_path);
@@ -1764,7 +1919,11 @@
                         updateMailNotification();
                         updateMailAuthSettings();
 
-                        // Run an external program on torrent completion
+                        // Run an external program on torrent added
+                        $('autorunOnTorrentAddedCheckbox').setProperty('checked', pref.autorun_on_torrent_added_enabled);
+                        $('autorunOnTorrentAddedProgram').setProperty('value', pref.autorun_on_torrent_added_program);
+                        updateAutoRunOnTorrentAdded();
+                        // Run an external program on torrent finished
                         $('autorun_checkbox').setProperty('checked', pref.autorun_enabled);
                         $('autorunProg_txt').setProperty('value', pref.autorun_program);
                         updateAutoRun();
@@ -1817,30 +1976,18 @@
                         updateMaxUploadsPerTorrentEnabled();
 
                         // Proxy Server
-                        switch (pref.proxy_type.toInt()) {
-                            case 5: //SOCKS4
-                                $('peer_proxy_type_select').setProperty('value', 'socks4');
-                                break;
-                            case 2: // SOCKS5
-                            case 4: // SOCKS5_PW
-                                $('peer_proxy_type_select').setProperty('value', 'socks5');
-                                break;
-                            case 1: // HTTP
-                            case 3: // HTTP_PW
-                                $('peer_proxy_type_select').setProperty('value', 'http');
-                                break;
-                            default: // NONE
-                                $('peer_proxy_type_select').setProperty('value', 'none');
-                        }
-                        updatePeerProxySettings();
+                        $('peer_proxy_type_select').setProperty('value', pref.proxy_type);
                         $('peer_proxy_host_text').setProperty('value', pref.proxy_ip);
                         $('peer_proxy_port_value').setProperty('value', pref.proxy_port);
-                        $('use_peer_proxy_checkbox').setProperty('checked', pref.proxy_peer_connections);
-                        $('proxy_only_for_torrents_checkbox').setProperty('checked', pref.proxy_torrents_only);
                         $('peer_proxy_auth_checkbox').setProperty('checked', pref.proxy_auth_enabled);
-                        updatePeerProxyAuthSettings();
                         $('peer_proxy_username_text').setProperty('value', pref.proxy_username);
                         $('peer_proxy_password_text').setProperty('value', pref.proxy_password);
+                        $('proxyHostnameLookupCheckbox').setProperty('checked', pref.proxy_hostname_lookup);
+                        $('proxy_bittorrent_checkbox').setProperty('checked', pref.proxy_bittorrent);
+                        $('use_peer_proxy_checkbox').setProperty('checked', pref.proxy_peer_connections);
+                        $('proxy_rss_checkbox').setProperty('checked', pref.proxy_rss);
+                        $('proxy_misc_checkbox').setProperty('checked', pref.proxy_misc);
+                        updatePeerProxySettings();
 
                         // IP Filtering
                         $('ipfilter_text_checkbox').setProperty('checked', pref.ip_filter_enabled);
@@ -1932,7 +2079,7 @@
 
                         // Web UI tab
                         // Language
-                        $('locale_select').setProperty('value', ((pref.locale === "en_US") ? "en" : pref.locale));
+                        updateWebuiLocaleSelect(pref.locale);
                         $('performanceWarning').setProperty('checked', pref.performance_warning);
 
                         // HTTP Server
@@ -1987,11 +2134,13 @@
 
                         // Advanced settings
                         // qBittorrent section
+                        $('resumeDataStorageType').setProperty('value', pref.resume_data_storage_type);
                         $('memoryWorkingSetLimit').setProperty('value', pref.memory_working_set_limit);
                         updateNetworkInterfaces(pref.current_network_interface);
                         updateInterfaceAddresses(pref.current_network_interface, pref.current_interface_address);
                         $('saveResumeDataInterval').setProperty('value', pref.save_resume_data_interval);
                         $('recheckTorrentsOnCompletion').setProperty('checked', pref.recheck_completed_torrents);
+                        $('refreshInterval').setProperty('value', pref.refresh_interval);
                         $('resolvePeerCountries').setProperty('checked', pref.resolve_peer_countries);
                         $('reannounceWhenAddressChanged').setProperty('checked', pref.reannounce_when_address_changed);
                         // libtorrent section
@@ -2003,7 +2152,8 @@
                         $('diskCacheExpiryInterval').setProperty('value', pref.disk_cache_ttl);
                         $('diskQueueSize').setProperty('value', (pref.disk_queue_size / 1024));
                         $('diskIOType').setProperty('value', pref.disk_io_type);
-                        $('enableOSCache').setProperty('checked', pref.enable_os_cache);
+                        $('diskIOReadMode').setProperty('value', pref.disk_io_read_mode);
+                        $('diskIOWriteMode').setProperty('value', pref.disk_io_write_mode);
                         $('coalesceReadsAndWrites').setProperty('checked', pref.enable_coalesce_read_write);
                         $('pieceExtentAffinity').setProperty('checked', pref.enable_piece_extent_affinity);
                         $('sendUploadPieceSuggestions').setProperty('checked', pref.enable_upload_suggestions);
@@ -2011,6 +2161,8 @@
                         $('sendBufferLowWatermark').setProperty('value', pref.send_buffer_low_watermark);
                         $('sendBufferWatermarkFactor').setProperty('value', pref.send_buffer_watermark_factor);
                         $('connectionSpeed').setProperty('value', pref.connection_speed);
+                        $('socketSendBufferSize').setProperty('value', (pref.socket_send_buffer_size / 1024));
+                        $('socketReceiveBufferSize').setProperty('value', (pref.socket_receive_buffer_size / 1024));
                         $('socketBacklogSize').setProperty('value', pref.socket_backlog_size);
                         $('outgoingPortsMin').setProperty('value', pref.outgoing_ports_min);
                         $('outgoingPortsMax').setProperty('value', pref.outgoing_ports_max);
@@ -2024,6 +2176,7 @@
                         $('blockPeersOnPrivilegedPorts').setProperty('checked', pref.block_peers_on_privileged_ports);
                         $('enableEmbeddedTracker').setProperty('checked', pref.enable_embedded_tracker);
                         $('embeddedTrackerPort').setProperty('value', pref.embedded_tracker_port);
+                        $('embeddedTrackerPortForwarding').setProperty('checked', pref.embedded_tracker_port_forwarding);
                         $('uploadSlotsBehavior').setProperty('value', pref.upload_slots_behavior);
                         $('uploadChokingAlgorithm').setProperty('value', pref.upload_choking_algorithm);
                         $('announceAllTrackers').setProperty('checked', pref.announce_to_all_trackers);
@@ -2043,10 +2196,22 @@
         const applyPreferences = function() {
             const settings = new Hash();
             // Validate form data
+
+            // Behavior tab
+            settings.set('file_log_enabled', $('filelog_checkbox').getProperty('checked'));
+            settings.set('file_log_path', $('filelog_save_path_input').getProperty('value'));
+            settings.set('file_log_backup_enabled', $('filelog_backup_checkbox').getProperty('checked'));
+            settings.set('file_log_max_size', $('filelog_max_size_input').getProperty('value'));
+            settings.set('file_log_delete_old', $('filelog_delete_old_checkbox').getProperty('checked'));
+            settings.set('file_log_age', $('filelog_age_input').getProperty('value'));
+            settings.set('file_log_age_type', $('filelog_age_type_select').getProperty('value'));
+
             // Downloads tab
             // When adding a torrent
             settings.set('torrent_content_layout', $('contentlayout_select').getSelected()[0].getProperty('value'));
+            settings.set('add_to_top_of_queue', $('addToTopOfQueueCheckbox').getProperty('checked'));
             settings.set('start_paused_enabled', $('dontstartdownloads_checkbox').getProperty('checked'));
+            settings.set('torrent_stop_condition', $('stopConditionSelect').getSelected()[0].getProperty('value'));
             settings.set('auto_delete_mode', $('deletetorrentfileafter_checkbox').getProperty('checked'));
 
             settings.set('preallocate_all', $('preallocateall_checkbox').getProperty('checked'));
@@ -2057,6 +2222,7 @@
             settings.set('torrent_changed_tmm_enabled', $('torrent_changed_tmm_combobox').getProperty('value'));
             settings.set('save_path_changed_tmm_enabled', $('save_path_changed_tmm_combobox').getProperty('value'));
             settings.set('category_changed_tmm_enabled', $('category_changed_tmm_combobox').getProperty('value'));
+            settings.set('use_subcategories', $('use_subcategories_checkbox').getProperty('checked'));
             settings.set('save_path', $('savepath_text').getProperty('value'));
             settings.set('temp_path_enabled', $('temppath_checkbox').getProperty('checked'));
             settings.set('temp_path', $('temppath_text').getProperty('value'));
@@ -2086,7 +2252,10 @@
             settings.set('mail_notification_username', $('mail_username_text').getProperty('value'));
             settings.set('mail_notification_password', $('mail_password_text').getProperty('value'));
 
-            // Run an external program on torrent completion
+            // Run an external program on torrent added
+            settings.set('autorun_on_torrent_added_enabled', $('autorunOnTorrentAddedCheckbox').getProperty('checked'));
+            settings.set('autorun_on_torrent_added_program', $('autorunOnTorrentAddedProgram').getProperty('value'));
+            // Run an external program on torrent finished
             settings.set('autorun_enabled', $('autorun_checkbox').getProperty('checked'));
             settings.set('autorun_program', $('autorunProg_txt').getProperty('value'));
 
@@ -2139,42 +2308,17 @@
             settings.set('max_uploads_per_torrent', max_uploads_per_torrent);
 
             // Proxy Server
-            const proxy_type_str = $('peer_proxy_type_select').getProperty('value');
-            let proxy_type = 0;
-            let proxy_auth_enabled = false;
-            if (proxy_type_str == "socks5") {
-                if ($('peer_proxy_auth_checkbox').getProperty('checked')) {
-                    proxy_type = 4;
-                    proxy_auth_enabled = true;
-                }
-                else {
-                    proxy_type = 2;
-                }
-            }
-            else {
-                if (proxy_type_str == "socks4") {
-                    proxy_type = 5;
-                }
-                else {
-                    if (proxy_type_str == "http") {
-                        if ($('peer_proxy_auth_checkbox').getProperty('checked')) {
-                            proxy_type = 3;
-                            proxy_auth_enabled = true;
-                        }
-                        else {
-                            proxy_type = 1;
-                        }
-                    }
-                }
-            }
-            settings.set('proxy_type', proxy_type);
-            settings.set('proxy_auth_enabled', proxy_auth_enabled);
+            settings.set('proxy_type', $('peer_proxy_type_select').getProperty('value'));
             settings.set('proxy_ip', $('peer_proxy_host_text').getProperty('value'));
             settings.set('proxy_port', $('peer_proxy_port_value').getProperty('value').toInt());
-            settings.set('proxy_peer_connections', $('use_peer_proxy_checkbox').getProperty('checked'));
-            settings.set('proxy_torrents_only', $('proxy_only_for_torrents_checkbox').getProperty('checked'));
+            settings.set('proxy_auth_enabled', $('peer_proxy_auth_checkbox').getProperty('checked'));
             settings.set('proxy_username', $('peer_proxy_username_text').getProperty('value'));
             settings.set('proxy_password', $('peer_proxy_password_text').getProperty('value'));
+            settings.set('proxy_hostname_lookup', $('proxyHostnameLookupCheckbox').getProperty('checked'));
+            settings.set('proxy_bittorrent', $('proxy_bittorrent_checkbox').getProperty('checked'));
+            settings.set('proxy_peer_connections', $('use_peer_proxy_checkbox').getProperty('checked'));
+            settings.set('proxy_rss', $('proxy_rss_checkbox').getProperty('checked'));
+            settings.set('proxy_misc', $('proxy_misc_checkbox').getProperty('checked'));
 
             // IP Filtering
             settings.set('ip_filter_enabled', $('ipfilter_text_checkbox').getProperty('checked'));
@@ -2333,9 +2477,23 @@
             settings.set('web_ui_address', web_ui_address);
             settings.set('web_ui_port', web_ui_port);
             settings.set('web_ui_upnp', $('webui_upnp_checkbox').getProperty('checked'));
-            settings.set('use_https', $('use_https_checkbox').getProperty('checked'));
-            settings.set('web_ui_https_cert_path', $('ssl_cert_text').getProperty('value'));
-            settings.set('web_ui_https_key_path', $('ssl_key_text').getProperty('value'));
+
+            const useHTTPS = $('use_https_checkbox').getProperty('checked');
+            settings.set('use_https', useHTTPS);
+
+            const httpsCertificate = $('ssl_cert_text').getProperty('value');
+            settings.set('web_ui_https_cert_path', httpsCertificate);
+            if (useHTTPS && (httpsCertificate.length === 0)) {
+                alert("QBT_TR(HTTPS certificate should not be empty)QBT_TR[CONTEXT=OptionsDialog]");
+                return;
+            }
+
+            const httpsKey = $('ssl_key_text').getProperty('value');
+            settings.set('web_ui_https_key_path', httpsKey);
+            if (useHTTPS && (httpsKey.length === 0)) {
+                alert("QBT_TR(HTTPS key should not be empty)QBT_TR[CONTEXT=OptionsDialog]");
+                return;
+            }
 
             // Authentication
             const web_ui_username = $('webui_username_text').getProperty('value');
@@ -2392,11 +2550,13 @@
 
             // Update advanced settings
             // qBittorrent section
+            settings.set('resume_data_storage_type', $('resumeDataStorageType').getProperty('value'));
             settings.set('memory_working_set_limit', $('memoryWorkingSetLimit').getProperty('value'));
             settings.set('current_network_interface', $('networkInterface').getProperty('value'));
             settings.set('current_interface_address', $('optionalIPAddressToBind').getProperty('value'));
             settings.set('save_resume_data_interval', $('saveResumeDataInterval').getProperty('value'));
             settings.set('recheck_completed_torrents', $('recheckTorrentsOnCompletion').getProperty('checked'));
+            settings.set('refresh_interval', $('refreshInterval').getProperty('value'));
             settings.set('resolve_peer_countries', $('resolvePeerCountries').getProperty('checked'));
             settings.set('reannounce_when_address_changed', $('reannounceWhenAddressChanged').getProperty('checked'));
 
@@ -2409,7 +2569,8 @@
             settings.set('disk_cache_ttl', $('diskCacheExpiryInterval').getProperty('value'));
             settings.set('disk_queue_size', ($('diskQueueSize').getProperty('value') * 1024));
             settings.set('disk_io_type', $('diskIOType').getProperty('value'));
-            settings.set('enable_os_cache', $('enableOSCache').getProperty('checked'));
+            settings.set('disk_io_read_mode', $('diskIOReadMode').getProperty('value'));
+            settings.set('disk_io_write_mode', $('diskIOWriteMode').getProperty('value'));
             settings.set('enable_coalesce_read_write', $('coalesceReadsAndWrites').getProperty('checked'));
             settings.set('enable_piece_extent_affinity', $('pieceExtentAffinity').getProperty('checked'));
             settings.set('enable_upload_suggestions', $('sendUploadPieceSuggestions').getProperty('checked'));
@@ -2417,6 +2578,8 @@
             settings.set('send_buffer_low_watermark', $('sendBufferLowWatermark').getProperty('value'));
             settings.set('send_buffer_watermark_factor', $('sendBufferWatermarkFactor').getProperty('value'));
             settings.set('connection_speed', $('connectionSpeed').getProperty('value'));
+            settings.set('socket_send_buffer_size', ($('socketSendBufferSize').getProperty('value') * 1024));
+            settings.set('socket_receive_buffer_size', ($('socketReceiveBufferSize').getProperty('value') * 1024));
             settings.set('socket_backlog_size', $('socketBacklogSize').getProperty('value'));
             settings.set('outgoing_ports_min', $('outgoingPortsMin').getProperty('value'));
             settings.set('outgoing_ports_max', $('outgoingPortsMax').getProperty('value'));
@@ -2430,6 +2593,7 @@
             settings.set('block_peers_on_privileged_ports', $('blockPeersOnPrivilegedPorts').getProperty('checked'));
             settings.set('enable_embedded_tracker', $('enableEmbeddedTracker').getProperty('checked'));
             settings.set('embedded_tracker_port', $('embeddedTrackerPort').getProperty('value'));
+            settings.set('embedded_tracker_port_forwarding', $('embeddedTrackerPortForwarding').getProperty('checked'));
             settings.set('upload_slots_behavior', $('uploadSlotsBehavior').getProperty('value'));
             settings.set('upload_choking_algorithm', $('uploadChokingAlgorithm').getProperty('value'));
             settings.set('announce_to_all_trackers', $('announceAllTrackers').getProperty('checked'));

@@ -97,7 +97,7 @@ namespace
         }
 
     private:
-        const char *m_name;
+        const char *m_name = nullptr;
         const char m_shortcut;
     };
 
@@ -326,6 +326,7 @@ namespace
     constexpr const BoolOption NO_SPLASH_OPTION {"no-splash"};
 #endif
     constexpr const IntOption WEBUI_PORT_OPTION {"webui-port"};
+    constexpr const IntOption TORRENTING_PORT_OPTION {"torrenting-port"};
     constexpr const StringOption PROFILE_OPTION {"profile"};
     constexpr const StringOption CONFIGURATION_OPTION {"configuration"};
     constexpr const BoolOption RELATIVE_FASTRESUME {"relative-fastresume"};
@@ -339,63 +340,24 @@ namespace
 }
 
 QBtCommandLineParameters::QBtCommandLineParameters(const QProcessEnvironment &env)
-    : showHelp(false)
-    , relativeFastresumePaths(RELATIVE_FASTRESUME.value(env))
-    , skipChecking(SKIP_HASH_CHECK_OPTION.value(env))
-    , sequential(SEQUENTIAL_OPTION.value(env))
-    , firstLastPiecePriority(FIRST_AND_LAST_OPTION.value(env))
-#if !defined(Q_OS_WIN) || defined(DISABLE_GUI)
-    , showVersion(false)
-#endif
+    : relativeFastresumePaths(RELATIVE_FASTRESUME.value(env))
 #ifndef DISABLE_GUI
     , noSplash(NO_SPLASH_OPTION.value(env))
 #elif !defined(Q_OS_WIN)
     , shouldDaemonize(DAEMON_OPTION.value(env))
 #endif
     , webUiPort(WEBUI_PORT_OPTION.value(env, -1))
-    , addPaused(PAUSED_OPTION.value(env))
+    , torrentingPort(TORRENTING_PORT_OPTION.value(env, -1))
     , skipDialog(SKIP_DIALOG_OPTION.value(env))
     , profileDir(PROFILE_OPTION.value(env))
     , configurationName(CONFIGURATION_OPTION.value(env))
-    , savePath(SAVE_PATH_OPTION.value(env))
-    , category(CATEGORY_OPTION.value(env))
 {
-}
-
-QStringList QBtCommandLineParameters::paramList() const
-{
-    QStringList result;
-    // Because we're passing a string list to the currently running
-    // qBittorrent process, we need some way of passing along the options
-    // the user has specified. Here we place special strings that are
-    // almost certainly not going to collide with a file path or URL
-    // specified by the user, and placing them at the beginning of the
-    // string list so that they will be processed before the list of
-    // torrent paths or URLs.
-
-    if (!savePath.isEmpty())
-        result.append(u"@savePath=" + savePath.data());
-
-    if (addPaused.has_value())
-        result.append(*addPaused ? u"@addPaused=1"_qs : u"@addPaused=0"_qs);
-
-    if (skipChecking)
-        result.append(u"@skipChecking"_qs);
-
-    if (!category.isEmpty())
-        result.append(u"@category=" + category);
-
-    if (sequential)
-        result.append(u"@sequential"_qs);
-
-    if (firstLastPiecePriority)
-        result.append(u"@firstLastPiecePriority"_qs);
-
-    if (skipDialog.has_value())
-        result.append(*skipDialog ? u"@skipDialog=1"_qs : u"@skipDialog=0"_qs);
-
-    result += torrents;
-    return result;
+    addTorrentParams.savePath = Path(SAVE_PATH_OPTION.value(env));
+    addTorrentParams.category = CATEGORY_OPTION.value(env);
+    addTorrentParams.skipChecking = SKIP_HASH_CHECK_OPTION.value(env);
+    addTorrentParams.sequential = SEQUENTIAL_OPTION.value(env);
+    addTorrentParams.firstLastPiecePriority = FIRST_AND_LAST_OPTION.value(env);
+    addTorrentParams.addPaused = PAUSED_OPTION.value(env);
 }
 
 QBtCommandLineParameters parseCommandLine(const QStringList &args)
@@ -427,6 +389,15 @@ QBtCommandLineParameters parseCommandLine(const QStringList &args)
                     throw CommandLineParameterError(QObject::tr("%1 must specify a valid port (1 to 65535).")
                                                     .arg(u"--webui-port"_qs));
             }
+            else if (arg == TORRENTING_PORT_OPTION)
+            {
+                result.torrentingPort = TORRENTING_PORT_OPTION.value(arg);
+                if ((result.torrentingPort < 1) || (result.torrentingPort > 65535))
+                {
+                    throw CommandLineParameterError(QObject::tr("%1 must specify a valid port (1 to 65535).")
+                                                    .arg(u"--torrenting-port"_qs));
+                }
+            }
 #ifndef DISABLE_GUI
             else if (arg == NO_SPLASH_OPTION)
             {
@@ -452,27 +423,27 @@ QBtCommandLineParameters parseCommandLine(const QStringList &args)
             }
             else if (arg == SAVE_PATH_OPTION)
             {
-                result.savePath = Path(SAVE_PATH_OPTION.value(arg));
+                result.addTorrentParams.savePath = Path(SAVE_PATH_OPTION.value(arg));
             }
             else if (arg == PAUSED_OPTION)
             {
-                result.addPaused = PAUSED_OPTION.value(arg);
+                result.addTorrentParams.addPaused = PAUSED_OPTION.value(arg);
             }
             else if (arg == SKIP_HASH_CHECK_OPTION)
             {
-                result.skipChecking = true;
+                result.addTorrentParams.skipChecking = true;
             }
             else if (arg == CATEGORY_OPTION)
             {
-                result.category = CATEGORY_OPTION.value(arg);
+                result.addTorrentParams.category = CATEGORY_OPTION.value(arg);
             }
             else if (arg == SEQUENTIAL_OPTION)
             {
-                result.sequential = true;
+                result.addTorrentParams.sequential = true;
             }
             else if (arg == FIRST_AND_LAST_OPTION)
             {
-                result.firstLastPiecePriority = true;
+                result.addTorrentParams.firstLastPiecePriority = true;
             }
             else if (arg == SKIP_DIALOG_OPTION)
             {
@@ -491,9 +462,9 @@ QBtCommandLineParameters parseCommandLine(const QStringList &args)
             torrentPath.setFile(arg);
 
             if (torrentPath.exists())
-                result.torrents += torrentPath.absoluteFilePath();
+                result.torrentSources += torrentPath.absoluteFilePath();
             else
-                result.torrents += arg;
+                result.torrentSources += arg;
         }
     }
 
@@ -527,7 +498,7 @@ QString makeUsage(const QString &prgName)
     const QString indentation {USAGE_INDENTATION, u' '};
 
     const QString text = QObject::tr("Usage:") + u'\n'
-        + indentation + prgName + u" [options] [(<filename> | <url>)...]" + u'\n'
+        + indentation + prgName + u' ' + QObject::tr("[options] [(<filename> | <url>)...]") + u'\n'
 
         + QObject::tr("Options:") + u'\n'
 #if !defined(Q_OS_WIN) || defined(DISABLE_GUI)
@@ -536,6 +507,9 @@ QString makeUsage(const QString &prgName)
         + SHOW_HELP_OPTION.usage() + wrapText(QObject::tr("Display this help message and exit")) + u'\n'
         + WEBUI_PORT_OPTION.usage(QObject::tr("port"))
         + wrapText(QObject::tr("Change the Web UI port"))
+        + u'\n'
+        + TORRENTING_PORT_OPTION.usage(QObject::tr("port"))
+        + wrapText(QObject::tr("Change the torrenting port"))
         + u'\n'
 #ifndef DISABLE_GUI
         + NO_SPLASH_OPTION.usage() + wrapText(QObject::tr("Disable splash screen")) + u'\n'

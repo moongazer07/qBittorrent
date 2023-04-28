@@ -1,5 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
+ * Copyright (C) 2023  Vladimir Golovnev <glassez@yandex.ru>
  * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +38,7 @@
 #include <QHostAddress>
 #include <QMenu>
 #include <QMessageBox>
+#include <QPointer>
 #include <QSet>
 #include <QShortcut>
 #include <QSortFilterProxyModel>
@@ -48,6 +50,7 @@
 #include "base/bittorrent/peerinfo.h"
 #include "base/bittorrent/session.h"
 #include "base/bittorrent/torrent.h"
+#include "base/bittorrent/torrentinfo.h"
 #include "base/global.h"
 #include "base/logger.h"
 #include "base/net/geoipmanager.h"
@@ -83,12 +86,27 @@ uint qHash(const PeerEndpoint &peerEndpoint, const uint seed = 0)
 }
 #endif
 
+namespace
+{
+    void setModelData(QStandardItemModel *model, const int row, const int column, const QString &displayData
+            , const QVariant &underlyingData, const Qt::Alignment textAlignmentData = {}, const QString &toolTip = {})
+    {
+        const QMap<int, QVariant> data = {
+            {Qt::DisplayRole, displayData},
+            {PeerListSortModel::UnderlyingDataRole, underlyingData},
+            {Qt::TextAlignmentRole, QVariant {textAlignmentData}},
+            {Qt::ToolTipRole, toolTip}};
+
+        model->setItemData(model->index(row, column), data);
+    }
+}
+
 PeerListWidget::PeerListWidget(PropertiesWidget *parent)
     : QTreeView(parent)
     , m_properties(parent)
 {
     // Load settings
-    loadSettings();
+    const bool columnLoaded = loadSettings();
     // Visual settings
     setUniformRowHeights(true);
     setRootIsDecorated(false);
@@ -108,6 +126,7 @@ PeerListWidget::PeerListWidget(PropertiesWidget *parent)
     m_listModel->setHeaderData(PeerListColumns::FLAGS, Qt::Horizontal, tr("Flags"));
     m_listModel->setHeaderData(PeerListColumns::CONNECTION, Qt::Horizontal, tr("Connection"));
     m_listModel->setHeaderData(PeerListColumns::CLIENT, Qt::Horizontal, tr("Client", "i.e.: Client application"));
+    m_listModel->setHeaderData(PeerListColumns::PEERID_CLIENT, Qt::Horizontal, tr("Peer ID Client", "i.e.: Client resolved from Peer ID"));
     m_listModel->setHeaderData(PeerListColumns::PROGRESS, Qt::Horizontal, tr("Progress", "i.e: % downloaded"));
     m_listModel->setHeaderData(PeerListColumns::DOWN_SPEED, Qt::Horizontal, tr("Down Speed", "i.e: Download speed"));
     m_listModel->setHeaderData(PeerListColumns::UP_SPEED, Qt::Horizontal, tr("Up Speed", "i.e: Upload speed"));
@@ -129,8 +148,16 @@ PeerListWidget::PeerListWidget(PropertiesWidget *parent)
     m_proxyModel->setSourceModel(m_listModel);
     m_proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
     setModel(m_proxyModel);
+
     hideColumn(PeerListColumns::IP_HIDDEN);
     hideColumn(PeerListColumns::COL_COUNT);
+
+    // Default hidden columns
+    if (!columnLoaded)
+    {
+        hideColumn(PeerListColumns::PEERID_CLIENT);
+    }
+
     m_resolveCountries = Preferences::instance()->resolvePeerCountries();
     if (!m_resolveCountries)
         hideColumn(PeerListColumns::COUNTRY);
@@ -171,6 +198,8 @@ PeerListWidget::PeerListWidget(PropertiesWidget *parent)
     handleSortColumnChanged(header()->sortIndicatorSection());
     const auto *copyHotkey = new QShortcut(QKeySequence::Copy, this, nullptr, nullptr, Qt::WidgetShortcut);
     connect(copyHotkey, &QShortcut::activated, this, &PeerListWidget::copySelectedPeers);
+    const auto *deleteHotkey = new QShortcut(QKeySequence::Delete, this, nullptr, nullptr, Qt::WidgetShortcut);
+    connect(deleteHotkey, &QShortcut::activated, this, &PeerListWidget::banSelectedPeers);
 }
 
 PeerListWidget::~PeerListWidget()
@@ -269,7 +298,7 @@ void PeerListWidget::showPeerListMenu()
     menu->setAttribute(Qt::WA_DeleteOnClose);
     menu->setToolTipsVisible(true);
 
-    QAction *addNewPeer = menu->addAction(UIThemeManager::instance()->getIcon(u"user-group-new"_qs), tr("Add peers...")
+    QAction *addNewPeer = menu->addAction(UIThemeManager::instance()->getIcon(u"peers-add"_qs), tr("Add peers...")
         , this, [this, torrent]()
     {
         const QVector<BitTorrent::PeerAddress> peersList = PeersAdditionDialog::askForPeers(this);
@@ -285,7 +314,7 @@ void PeerListWidget::showPeerListMenu()
     QAction *copyPeers = menu->addAction(UIThemeManager::instance()->getIcon(u"edit-copy"_qs), tr("Copy IP:port")
         , this, &PeerListWidget::copySelectedPeers);
     menu->addSeparator();
-    QAction *banPeers = menu->addAction(UIThemeManager::instance()->getIcon(u"user-group-delete"_qs), tr("Ban peer permanently")
+    QAction *banPeers = menu->addAction(UIThemeManager::instance()->getIcon(u"peers-remove"_qs), tr("Ban peer permanently")
         , this, &PeerListWidget::banSelectedPeers);
 
     // disable actions
@@ -364,15 +393,16 @@ void PeerListWidget::copySelectedPeers()
 void PeerListWidget::clear()
 {
     m_peerItems.clear();
+    m_I2PPeerItems.clear();
     m_itemsByIP.clear();
     const int nbrows = m_listModel->rowCount();
     if (nbrows > 0)
         m_listModel->removeRows(0, nbrows);
 }
 
-void PeerListWidget::loadSettings()
+bool PeerListWidget::loadSettings()
 {
-    header()->restoreState(Preferences::instance()->getPeerListState());
+    return header()->restoreState(Preferences::instance()->getPeerListState());
 }
 
 void PeerListWidget::saveSettings() const
@@ -382,105 +412,129 @@ void PeerListWidget::saveSettings() const
 
 void PeerListWidget::loadPeers(const BitTorrent::Torrent *torrent)
 {
-    if (!torrent) return;
+    if (!torrent)
+        return;
 
-    const QVector<BitTorrent::PeerInfo> peers = torrent->peers();
-    QSet<PeerEndpoint> existingPeers;
-    for (auto i = m_peerItems.cbegin(); i != m_peerItems.cend(); ++i)
-        existingPeers << i.key();
-
-    for (const BitTorrent::PeerInfo &peer : peers)
+    using TorrentPtr = QPointer<const BitTorrent::Torrent>;
+    torrent->fetchPeerInfo([this, torrent = TorrentPtr(torrent)](const QVector<BitTorrent::PeerInfo> &peers)
     {
-        if (peer.address().ip.isNull()) continue;
+        if (torrent != m_properties->getCurrentTorrent())
+            return;
 
-        bool isNewPeer = false;
-        updatePeer(torrent, peer, isNewPeer);
-        if (!isNewPeer)
+        // Remove I2P peers since they will be completely reloaded.
+        for (QStandardItem *item : asConst(m_I2PPeerItems))
+            m_listModel->removeRow(item->row());
+        m_I2PPeerItems.clear();
+
+        QSet<PeerEndpoint> existingPeers;
+        existingPeers.reserve(m_peerItems.size());
+        for (auto i = m_peerItems.cbegin(); i != m_peerItems.cend(); ++i)
+            existingPeers.insert(i.key());
+
+        const bool hideZeroValues = Preferences::instance()->getHideZeroValues();
+        for (const BitTorrent::PeerInfo &peer : peers)
         {
+            if (peer.address().ip.isNull())
+                continue;
+
             const PeerEndpoint peerEndpoint {peer.address(), peer.connectionType()};
-            existingPeers.remove(peerEndpoint);
+
+            auto itemIter = m_peerItems.find(peerEndpoint);
+            const bool isNewPeer = (itemIter == m_peerItems.end());
+            const int row = isNewPeer ? m_listModel->rowCount() : (*itemIter)->row();
+            if (isNewPeer)
+            {
+                m_listModel->insertRow(row);
+
+                const bool useI2PSocket = peer.useI2PSocket();
+
+                const QString peerIPString = useI2PSocket ? tr("N/A") : peerEndpoint.address.ip.toString();
+                setModelData(m_listModel, row, PeerListColumns::IP, peerIPString, peerIPString, {}, peerIPString);
+
+                const QString peerIPHiddenString = useI2PSocket ? QString() : peerEndpoint.address.ip.toString();
+                setModelData(m_listModel, row, PeerListColumns::IP_HIDDEN, peerIPHiddenString, peerIPHiddenString);
+
+                const QString peerPortString = useI2PSocket ? tr("N/A") : QString::number(peer.address().port);
+                setModelData(m_listModel, row, PeerListColumns::PORT, peerPortString, peer.address().port, (Qt::AlignRight | Qt::AlignVCenter));
+
+                if (useI2PSocket)
+                {
+                    m_I2PPeerItems.append(m_listModel->item(row, PeerListColumns::IP));
+                }
+                else
+                {
+                    itemIter = m_peerItems.insert(peerEndpoint, m_listModel->item(row, PeerListColumns::IP));
+                    m_itemsByIP[peerEndpoint.address.ip].insert(itemIter.value());
+                }
+            }
+            else
+            {
+                existingPeers.remove(peerEndpoint);
+            }
+
+            updatePeer(row, torrent, peer, hideZeroValues);
         }
-    }
 
-    // Remove peers that are gone
-    for (const PeerEndpoint &peerEndpoint : asConst(existingPeers))
-    {
-        QStandardItem *item = m_peerItems.take(peerEndpoint);
+        // Remove peers that are gone
+        for (const PeerEndpoint &peerEndpoint : asConst(existingPeers))
+        {
+            QStandardItem *item = m_peerItems.take(peerEndpoint);
 
-        QSet<QStandardItem *> &items = m_itemsByIP[peerEndpoint.address.ip];
-        items.remove(item);
-        if (items.isEmpty())
-            m_itemsByIP.remove(peerEndpoint.address.ip);
+            QSet<QStandardItem *> &items = m_itemsByIP[peerEndpoint.address.ip];
+            items.remove(item);
+            if (items.isEmpty())
+                m_itemsByIP.remove(peerEndpoint.address.ip);
 
-        m_listModel->removeRow(item->row());
-    }
+            m_listModel->removeRow(item->row());
+        }
+    });
 }
 
-void PeerListWidget::updatePeer(const BitTorrent::Torrent *torrent, const BitTorrent::PeerInfo &peer, bool &isNewPeer)
+void PeerListWidget::updatePeer(const int row, const BitTorrent::Torrent *torrent, const BitTorrent::PeerInfo &peer, const bool hideZeroValues)
 {
-    const PeerEndpoint peerEndpoint {peer.address(), peer.connectionType()};
-    const QString peerIp = peerEndpoint.address.ip.toString();
     const Qt::Alignment intDataTextAlignment = Qt::AlignRight | Qt::AlignVCenter;
 
-    const auto setModelData =
-        [this] (const int row, const int column, const QString &displayData
-                , const QVariant &underlyingData, const Qt::Alignment textAlignmentData = {}
-                , const QString &toolTip = {})
-    {
-        const QMap<int, QVariant> data =
-        {
-            {Qt::DisplayRole, displayData},
-            {PeerListSortModel::UnderlyingDataRole, underlyingData},
-            {Qt::TextAlignmentRole, QVariant {textAlignmentData}},
-            {Qt::ToolTipRole, toolTip}
-        };
-        m_listModel->setItemData(m_listModel->index(row, column), data);
-    };
-
-    auto itemIter = m_peerItems.find(peerEndpoint);
-    isNewPeer = (itemIter == m_peerItems.end());
-    if (isNewPeer)
-    {
-        // new item
-        const int row = m_listModel->rowCount();
-        m_listModel->insertRow(row);
-
-        setModelData(row, PeerListColumns::IP, peerIp, peerIp, {}, peerIp);
-        setModelData(row, PeerListColumns::PORT, QString::number(peer.address().port), peer.address().port, intDataTextAlignment);
-        setModelData(row, PeerListColumns::IP_HIDDEN, peerIp, peerIp);
-
-        itemIter = m_peerItems.insert(peerEndpoint, m_listModel->item(row, PeerListColumns::IP));
-        m_itemsByIP[peerEndpoint.address.ip].insert(itemIter.value());
-    }
-
-    const int row = (*itemIter)->row();
-    const bool hideValues = Preferences::instance()->getHideZeroValues();
-
-    setModelData(row, PeerListColumns::CONNECTION, peer.connectionType(), peer.connectionType());
-    setModelData(row, PeerListColumns::FLAGS, peer.flags(), peer.flags(), {}, peer.flagsDescription());
     const QString client = peer.client().toHtmlEscaped();
-    setModelData(row, PeerListColumns::CLIENT, client, client, {}, client);
-    setModelData(row, PeerListColumns::PROGRESS, (Utils::String::fromDouble(peer.progress() * 100, 1) + u'%'), peer.progress(), intDataTextAlignment);
-    const QString downSpeed = (hideValues && (peer.payloadDownSpeed() <= 0)) ? QString {} : Utils::Misc::friendlyUnit(peer.payloadDownSpeed(), true);
-    setModelData(row, PeerListColumns::DOWN_SPEED, downSpeed, peer.payloadDownSpeed(), intDataTextAlignment);
-    const QString upSpeed = (hideValues && (peer.payloadUpSpeed() <= 0)) ? QString {} : Utils::Misc::friendlyUnit(peer.payloadUpSpeed(), true);
-    setModelData(row, PeerListColumns::UP_SPEED, upSpeed, peer.payloadUpSpeed(), intDataTextAlignment);
-    const QString totalDown = (hideValues && (peer.totalDownload() <= 0)) ? QString {} : Utils::Misc::friendlyUnit(peer.totalDownload());
-    setModelData(row, PeerListColumns::TOT_DOWN, totalDown, peer.totalDownload(), intDataTextAlignment);
-    const QString totalUp = (hideValues && (peer.totalUpload() <= 0)) ? QString {} : Utils::Misc::friendlyUnit(peer.totalUpload());
-    setModelData(row, PeerListColumns::TOT_UP, totalUp, peer.totalUpload(), intDataTextAlignment);
-    setModelData(row, PeerListColumns::RELEVANCE, (Utils::String::fromDouble(peer.relevance() * 100, 1) + u'%'), peer.relevance(), intDataTextAlignment);
+    setModelData(m_listModel, row, PeerListColumns::CLIENT, client, client, {}, client);
+
+    const QString peerIdClient = peer.peerIdClient().toHtmlEscaped();
+    setModelData(m_listModel, row, PeerListColumns::PEERID_CLIENT, peerIdClient, peerIdClient);
+
+    const QString downSpeed = (hideZeroValues && (peer.payloadDownSpeed() <= 0))
+            ? QString() : Utils::Misc::friendlyUnit(peer.payloadDownSpeed(), true);
+    setModelData(m_listModel, row, PeerListColumns::DOWN_SPEED, downSpeed, peer.payloadDownSpeed(), intDataTextAlignment);
+
+    const QString upSpeed = (hideZeroValues && (peer.payloadUpSpeed() <= 0))
+            ? QString() : Utils::Misc::friendlyUnit(peer.payloadUpSpeed(), true);
+    setModelData(m_listModel, row, PeerListColumns::UP_SPEED, upSpeed, peer.payloadUpSpeed(), intDataTextAlignment);
+
+    const QString totalDown = (hideZeroValues && (peer.totalDownload() <= 0))
+            ? QString() : Utils::Misc::friendlyUnit(peer.totalDownload());
+    setModelData(m_listModel, row, PeerListColumns::TOT_DOWN, totalDown, peer.totalDownload(), intDataTextAlignment);
+
+    const QString totalUp = (hideZeroValues && (peer.totalUpload() <= 0))
+            ? QString() : Utils::Misc::friendlyUnit(peer.totalUpload());
+    setModelData(m_listModel, row, PeerListColumns::TOT_UP, totalUp, peer.totalUpload(), intDataTextAlignment);
+
+    setModelData(m_listModel, row, PeerListColumns::CONNECTION, peer.connectionType(), peer.connectionType());
+    setModelData(m_listModel, row, PeerListColumns::FLAGS, peer.flags(), peer.flags(), {}, peer.flagsDescription());
+    setModelData(m_listModel, row, PeerListColumns::PROGRESS, (Utils::String::fromDouble(peer.progress() * 100, 1) + u'%')
+            , peer.progress(), intDataTextAlignment);
+    setModelData(m_listModel, row, PeerListColumns::RELEVANCE, (Utils::String::fromDouble(peer.relevance() * 100, 1) + u'%')
+            , peer.relevance(), intDataTextAlignment);
 
     const PathList filePaths = torrent->info().filesForPiece(peer.downloadingPieceIndex());
     QStringList downloadingFiles;
     downloadingFiles.reserve(filePaths.size());
     for (const Path &filePath : filePaths)
         downloadingFiles.append(filePath.toString());
-    const QString downloadingFilesDisplayValue = downloadingFiles.join(u';');
-    setModelData(row, PeerListColumns::DOWNLOADING_PIECE, downloadingFilesDisplayValue, downloadingFilesDisplayValue, {}, downloadingFiles.join(u'\n'));
 
-    if (m_resolver)
-        m_resolver->resolve(peerEndpoint.address.ip);
+    const QString downloadingFilesDisplayValue = downloadingFiles.join(u';');
+    setModelData(m_listModel, row, PeerListColumns::DOWNLOADING_PIECE, downloadingFilesDisplayValue
+            , downloadingFilesDisplayValue, {}, downloadingFiles.join(u'\n'));
+
+    if (!peer.useI2PSocket() && m_resolver)
+        m_resolver->resolve(peer.address().ip);
 
     if (m_resolveCountries)
     {

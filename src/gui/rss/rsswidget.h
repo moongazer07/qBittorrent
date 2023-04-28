@@ -66,6 +66,7 @@ private slots:
     void displayRSSListMenu(const QPoint &pos);
     void displayItemsListMenu();
     void renameSelectedRSSItem();
+    void editSelectedRSSFeedURL();
     void refreshSelectedItems();
     void copySelectedFeedsURL();
     void handleCurrentFeedItemChanged(QTreeWidgetItem *currentItem);
@@ -82,7 +83,7 @@ private slots:
     void handleUnreadCountChanged();
 
 private:
-    Ui::RSSWidget *m_ui;
-    ArticleListWidget *m_articleListWidget;
-    FeedListWidget *m_feedListWidget;
+    Ui::RSSWidget *m_ui = nullptr;
+    ArticleListWidget *m_articleListWidget = nullptr;
+    FeedListWidget *m_feedListWidget = nullptr;
 };

@@ -31,6 +31,7 @@
 #include "server.h"
 
 #include <algorithm>
+#include <chrono>
 
 #include <QNetworkProxy>
 #include <QSslCipher>
@@ -44,19 +45,44 @@
 #include "base/utils/net.h"
 #include "connection.h"
 
+using namespace std::chrono_literals;
+
 namespace
 {
-    const int KEEP_ALIVE_DURATION = 7 * 1000;  // milliseconds
+    const int KEEP_ALIVE_DURATION = std::chrono::milliseconds(7s).count();
     const int CONNECTIONS_LIMIT = 500;
-    const int CONNECTIONS_SCAN_INTERVAL = 2;  // seconds
+    const std::chrono::seconds CONNECTIONS_SCAN_INTERVAL {2};
 
     QList<QSslCipher> safeCipherList()
     {
         const QStringList badCiphers {u"idea"_qs, u"rc4"_qs};
+        // Contains Ciphersuites that use RSA for the Key Exchange but they don't mention it in their name
+        const QStringList badRSAShorthandSuites {
+            u"AES256-GCM-SHA384"_qs, u"AES128-GCM-SHA256"_qs, u"AES256-SHA256"_qs,
+            u"AES128-SHA256"_qs, u"AES256-SHA"_qs, u"AES128-SHA"_qs};
+        // Contains Ciphersuites that use AES CBC mode but they don't mention it in their name
+        const QStringList badAESShorthandSuites {
+            u"ECDHE-ECDSA-AES256-SHA384"_qs, u"ECDHE-RSA-AES256-SHA384"_qs, u"DHE-RSA-AES256-SHA256"_qs,
+            u"ECDHE-ECDSA-AES128-SHA256"_qs, u"ECDHE-RSA-AES128-SHA256"_qs, u"DHE-RSA-AES128-SHA256"_qs,
+            u"ECDHE-ECDSA-AES256-SHA"_qs, u"ECDHE-RSA-AES256-SHA"_qs, u"DHE-RSA-AES256-SHA"_qs,
+            u"ECDHE-ECDSA-AES128-SHA"_qs, u"ECDHE-RSA-AES128-SHA"_qs, u"DHE-RSA-AES128-SHA"_qs};
         const QList<QSslCipher> allCiphers {QSslConfiguration::supportedCiphers()};
         QList<QSslCipher> safeCiphers;
-        std::copy_if(allCiphers.cbegin(), allCiphers.cend(), std::back_inserter(safeCiphers), [&badCiphers](const QSslCipher &cipher)
+        std::copy_if(allCiphers.cbegin(), allCiphers.cend(), std::back_inserter(safeCiphers),
+                     [&badCiphers, &badRSAShorthandSuites, &badAESShorthandSuites](const QSslCipher &cipher)
         {
+            const QString name = cipher.name();
+            if (name.contains(u"-cbc-"_qs, Qt::CaseInsensitive) // AES CBC mode is considered vulnerable to BEAST attack
+                || name.startsWith(u"adh-"_qs, Qt::CaseInsensitive) // Key Exchange: Diffie-Hellman, doesn't support Perfect Forward Secrecy
+                || name.startsWith(u"aecdh-"_qs, Qt::CaseInsensitive) // Key Exchange: Elliptic Curve Diffie-Hellman, doesn't support Perfect Forward Secrecy
+                || name.startsWith(u"psk-"_qs, Qt::CaseInsensitive) // Key Exchange: Pre-Shared Key, doesn't support Perfect Forward Secrecy
+                || name.startsWith(u"rsa-"_qs, Qt::CaseInsensitive) // Key Exchange: Rivest Shamir Adleman (RSA), doesn't support Perfect Forward Secrecy
+                || badRSAShorthandSuites.contains(name, Qt::CaseInsensitive)
+                || badAESShorthandSuites.contains(name, Qt::CaseInsensitive))
+            {
+                return false;
+            }
+
             return std::none_of(badCiphers.cbegin(), badCiphers.cend(), [&cipher](const QString &badCipher)
             {
                 return cipher.name().contains(badCipher, Qt::CaseInsensitive);
@@ -71,24 +97,24 @@ using namespace Http;
 Server::Server(IRequestHandler *requestHandler, QObject *parent)
     : QTcpServer(parent)
     , m_requestHandler(requestHandler)
-    , m_https(false)
 {
     setProxy(QNetworkProxy::NoProxy);
 
     QSslConfiguration sslConf {QSslConfiguration::defaultConfiguration()};
+    sslConf.setProtocol(QSsl::TlsV1_2OrLater);
     sslConf.setCiphers(safeCipherList());
     QSslConfiguration::setDefaultConfiguration(sslConf);
 
     auto *dropConnectionTimer = new QTimer(this);
     connect(dropConnectionTimer, &QTimer::timeout, this, &Server::dropTimedOutConnection);
-    dropConnectionTimer->start(CONNECTIONS_SCAN_INTERVAL * 1000);
+    dropConnectionTimer->start(CONNECTIONS_SCAN_INTERVAL);
 }
 
 void Server::incomingConnection(const qintptr socketDescriptor)
 {
     if (m_connections.size() >= CONNECTIONS_LIMIT) return;
 
-    QTcpSocket *serverSocket;
+    QTcpSocket *serverSocket = nullptr;
     if (m_https)
         serverSocket = new QSslSocket(this);
     else

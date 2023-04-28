@@ -102,10 +102,9 @@ void ArticleListWidget::handleArticleRead(RSS::Article *rssArticle)
     auto item = mapRSSArticle(rssArticle);
     if (!item) return;
 
-    const QColor defaultColor {palette().color(QPalette::Inactive, QPalette::WindowText)};
-    const QBrush foregroundBrush {UIThemeManager::instance()->getColor(u"RSS.ReadArticle"_qs, defaultColor)};
+    const QBrush foregroundBrush {UIThemeManager::instance()->getColor(u"RSS.ReadArticle"_qs)};
     item->setData(Qt::ForegroundRole, foregroundBrush);
-    item->setData(Qt::DecorationRole, UIThemeManager::instance()->getIcon(u"sphere"_qs));
+    item->setData(Qt::DecorationRole, UIThemeManager::instance()->getIcon(u"loading"_qs, u"sphere"_qs));
 
     checkInvariant();
 }
@@ -130,17 +129,15 @@ QListWidgetItem *ArticleListWidget::createItem(RSS::Article *article) const
     item->setData(Qt::UserRole, QVariant::fromValue(article));
     if (article->isRead())
     {
-        const QColor defaultColor {palette().color(QPalette::Inactive, QPalette::WindowText)};
-        const QBrush foregroundBrush {UIThemeManager::instance()->getColor(u"RSS.ReadArticle"_qs, defaultColor)};
+        const QBrush foregroundBrush {UIThemeManager::instance()->getColor(u"RSS.ReadArticle"_qs)};
         item->setData(Qt::ForegroundRole, foregroundBrush);
-        item->setData(Qt::DecorationRole, UIThemeManager::instance()->getIcon(u"sphere"_qs));
+        item->setData(Qt::DecorationRole, UIThemeManager::instance()->getIcon(u"loading"_qs, u"sphere"_qs));
     }
     else
     {
-        const QColor defaultColor {palette().color(QPalette::Active, QPalette::Link)};
-        const QBrush foregroundBrush {UIThemeManager::instance()->getColor(u"RSS.UnreadArticle"_qs, defaultColor)};
+        const QBrush foregroundBrush {UIThemeManager::instance()->getColor(u"RSS.UnreadArticle"_qs)};
         item->setData(Qt::ForegroundRole, foregroundBrush);
-        item->setData(Qt::DecorationRole, UIThemeManager::instance()->getIcon(u"sphere"_qs));
+        item->setData(Qt::DecorationRole, UIThemeManager::instance()->getIcon(u"loading"_qs, u"sphere"_qs));
     }
 
     return item;

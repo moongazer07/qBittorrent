@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2017  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2017-2023  Vladimir Golovnev <glassez@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,6 +38,7 @@
 
 #include "base/exceptions.h"
 #include "base/settingvalue.h"
+#include "base/utils/thread.h"
 
 class QThread;
 class QTimer;
@@ -112,6 +113,7 @@ namespace RSS
         void handleTorrentDownloadFinished(const QString &url);
         void handleTorrentDownloadFailed(const QString &url);
         void handleNewArticle(const Article *article);
+        void handleFeedURLChanged(Feed *feed, const QString &oldURL);
 
     private:
         void timerEvent(QTimerEvent *event) override;
@@ -136,9 +138,9 @@ namespace RSS
         SettingValue<QVariant> m_storeSmartEpisodeFilter;
         SettingValue<bool> m_storeDownloadRepacks;
 
-        QTimer *m_processingTimer;
-        QThread *m_ioThread;
-        AsyncFileStorage *m_fileStorage;
+        QTimer *m_processingTimer = nullptr;
+        Utils::Thread::UniquePtr m_ioThread;
+        AsyncFileStorage *m_fileStorage = nullptr;
         QHash<QString, AutoDownloadRule> m_rules;
         QList<QSharedPointer<ProcessingJob>> m_processingQueue;
         QHash<QString, QSharedPointer<ProcessingJob>> m_waitingJobs;

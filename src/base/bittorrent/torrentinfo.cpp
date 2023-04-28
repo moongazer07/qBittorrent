@@ -30,6 +30,7 @@
 
 #include <libtorrent/create_torrent.hpp>
 #include <libtorrent/error_code.hpp>
+#include <libtorrent/version.hpp>
 
 #include <QByteArray>
 #include <QDateTime>
@@ -240,6 +241,11 @@ Path TorrentInfo::filePath(const int index) const
 {
     if (!isValid()) return {};
 
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(index < m_nativeIndexes.size());
+    if ((index < 0) || (index >= m_nativeIndexes.size()))
+        return {};
+
     return Path(m_nativeInfo->orig_files().file_path(m_nativeIndexes[index]));
 }
 
@@ -257,12 +263,22 @@ qlonglong TorrentInfo::fileSize(const int index) const
 {
     if (!isValid()) return -1;
 
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(index < m_nativeIndexes.size());
+    if ((index < 0) || (index >= m_nativeIndexes.size()))
+        return -1;
+
     return m_nativeInfo->orig_files().file_size(m_nativeIndexes[index]);
 }
 
 qlonglong TorrentInfo::fileOffset(const int index) const
 {
     if (!isValid()) return -1;
+
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(index < m_nativeIndexes.size());
+    if ((index < 0) || (index >= m_nativeIndexes.size()))
+        return -1;
 
     return m_nativeInfo->orig_files().file_offset(m_nativeIndexes[index]);
 }
@@ -292,8 +308,12 @@ QVector<QUrl> TorrentInfo::urlSeeds() const
 
     for (const lt::web_seed_entry &webSeed : nativeWebSeeds)
     {
+#if LIBTORRENT_VERSION_NUM < 20100
         if (webSeed.type == lt::web_seed_entry::url_seed)
             urlSeeds.append(QUrl(QString::fromStdString(webSeed.url)));
+#else
+        urlSeeds.append(QUrl(QString::fromStdString(webSeed.url)));
+#endif
     }
 
     return urlSeeds;

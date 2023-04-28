@@ -70,7 +70,6 @@ public slots:
     void clear();
     void loadStickyItems(const BitTorrent::Torrent *torrent);
     void loadTrackers();
-    void askForTrackers();
     void copyTrackerUrl();
     void reannounceSelected();
     void deleteSelectedTrackers();
@@ -83,6 +82,7 @@ protected:
     QVector<QTreeWidgetItem *> getSelectedTrackerItems() const;
 
 private slots:
+    void openAddTrackersDialog();
     void displayColumnHeaderMenu();
 
 private:
@@ -91,9 +91,9 @@ private:
 
     static QStringList headerLabels();
 
-    PropertiesWidget *m_properties;
+    PropertiesWidget *m_properties = nullptr;
     QHash<QString, QTreeWidgetItem *> m_trackerItems;
-    QTreeWidgetItem *m_DHTItem;
-    QTreeWidgetItem *m_PEXItem;
-    QTreeWidgetItem *m_LSDItem;
+    QTreeWidgetItem *m_DHTItem = nullptr;
+    QTreeWidgetItem *m_PEXItem = nullptr;
+    QTreeWidgetItem *m_LSDItem = nullptr;
 };
