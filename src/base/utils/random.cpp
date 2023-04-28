@@ -1,31 +1,3 @@
-/*
- * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2017  Mike Tzou
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- * In addition, as a special exception, the copyright holders give permission to
- * link this program with the OpenSSL project's "OpenSSL" library (or with
- * modified versions of it that use the same license as the "OpenSSL" library),
- * and distribute the linked executables. You must obey the GNU General Public
- * License in all respects for all of the code used other than "OpenSSL".  If you
- * modify file(s), you may extend this exception to your version of the file(s),
- * but you are not obligated to do so. If you do not wish to do so, delete this
- * exception statement from your version.
- */
-
 #include "random.h"
 
 #include <random>
@@ -108,3 +80,37 @@ namespace
             return std::numeric_limits<result_type>::min();
         }
 
+        static constexpr result_type max()
+        {
+            return std::numeric_limits<result_type>::max();
+        }
+
+        result_type operator()()
+        {
+            result_type buf = 0;
+            const size_t size = sizeof(buf);
+            const size_t result = fread(&buf, 1, size, m_randDev);
+            if (result != size)
+                qFatal("Failed to read from /dev/urandom. Reason: %s. Error code: %d.\n", std::strerror(errno), errno);
+
+            return buf;
+        }
+
+    private:
+        FILE *m_randDev;
+    };
+#endif
+
+    std::mt19937 createRNG()
+    {
+        static RandomLayer rng;
+        return std::mt19937(rng());
+    }
+}
+
+int Random::next()
+{
+    static std::mt19937 rng = createRNG();
+    static std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
+    return dist(rng);
+}
